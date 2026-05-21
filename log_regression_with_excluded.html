@@ -1,17 +1,15 @@
-<!-- 구글 Noto Sans KR 웹폰트 로드 -->
+<!-- 웹 세이프 시스템 폰트 스택 적용 -->
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
-  
-  /* 대시보드 전체 컨테이너에 폰트 적용 */
+  /* 대시보드 전체 컨테이너에 시스템 폰트 적용 */
   .dashboard-container {
-    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", "Noto Sans KR", Roboto, sans-serif;
   }
 </style>
 
 <div class="dashboard-container">
   <h2 class="sr-only">네이버 기대지수를 통한 최종 관객수 예측 모델</h2>
 
-  <!-- 요약 통계 대시보드 -->
+  <!-- 요약 통계 대시보 -->
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:1rem 0 1rem;">
     <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.9rem 1rem;">
       <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px;">표본 수</div>
@@ -131,6 +129,9 @@ const gridColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
 const tickColor = isDark ? '#888780' : '#888780';
 const labelColor = isDark ? '#B4B2A9' : '#5F5E5A';
 
+// Chart 내부 폰트 처리를 위한 시스템 웹세이프 폰트 스택 정의
+const systemFontStack = '-apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", sans-serif';
+
 const normalPts = all.filter(d => !d.hl).map(d => ({x:d.lx, y:d.ly, movie:d.movie}));
 const hlPts     = all.filter(d =>  d.hl).map(d => ({x:d.lx, y:d.ly, movie:d.movie}));
 const slope = 1.2347, intercept = 1.5552;
@@ -156,10 +157,9 @@ new Chart(document.getElementById('mainChart'), {
     plugins: {
       legend:{ display:false },
       tooltip:{ 
-        /* 툴팁 내 Noto Sans KR 폰트 적용 */
-        titleFont: { family: "'Noto Sans KR'" },
-        bodyFont: { family: "'Noto Sans KR'" },
-        footerFont: { family: "'Noto Sans KR'" },
+        titleFont: { family: systemFontStack },
+        bodyFont: { family: systemFontStack },
+        footerFont: { family: systemFontStack },
         callbacks:{ label: ctx => {
           if(ctx.datasetIndex<=1){ const d=ctx.raw; return [d.movie, `기대지수: ${Math.round(Math.pow(10,d.x)).toLocaleString()}`, `관객수: ${Math.round(Math.pow(10,d.y)).toLocaleString()}명`]; }
           return null;
@@ -167,9 +167,8 @@ new Chart(document.getElementById('mainChart'), {
       }
     },
     scales: {
-      /* 축 레이블 및 인덱스 텍스트에 Noto Sans KR 폰트 적용 */
-      x:{ type:'linear', min:xMin, max:xMax, title:{display:true, text:'log₁₀(개봉주 기대지수)', font:{size:12, family: "'Noto Sans KR'"}, color:labelColor}, ticks:{color:tickColor, font:{size:11, family: "'Noto Sans KR'"}, callback: v=>origLabel(v,false)}, grid:{color:gridColor} },
-      y:{ type:'linear', title:{display:true, text:'log₁₀(최종 관객수)', font:{size:12, family: "'Noto Sans KR'"}, color:labelColor}, ticks:{color:tickColor, font:{size:11, family: "'Noto Sans KR'"}, callback: v=>origLabel(v,true)}, grid:{color:gridColor} }
+      x:{ type:'linear', min:xMin, max:xMax, title:{display:true, text:'log₁₀(개봉주 기대지수)', font:{size:12, family: systemFontStack}, color:labelColor}, ticks:{color:tickColor, font:{size:11, family: systemFontStack}, callback: v=>origLabel(v,false)}, grid:{color:gridColor} },
+      y:{ type:'linear', title:{display:true, text:'log₁₀(최종 관객수)', font:{size:12, family: systemFontStack}, color:labelColor}, ticks:{color:tickColor, font:{size:11, family: systemFontStack}, callback: v=>origLabel(v,true)}, grid:{color:gridColor} }
     }
   }
 });
@@ -178,7 +177,6 @@ let currentFilter = 'all';
 function filterTable(f) {
   currentFilter = f;
   
-  // 버튼 전체 스타일 리셋 및 활성화 스타일링 적용
   ['btnAll','btnHasY','btnNoY'].forEach(id => {
     const btn = document.getElementById(id);
     btn.style.background = 'transparent';
@@ -220,6 +218,5 @@ function renderTable() {
   }).join('');
 }
 
-// 초기화 구문 호출 위치 수정
 filterTable('all');
 </script>
