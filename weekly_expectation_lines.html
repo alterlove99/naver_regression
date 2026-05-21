@@ -1,17 +1,43 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>영화 기대지수 추이 그래프</title>
+  
+  <!-- 1. 구글 Noto Sans KR 폰트 서버에서 불러오기 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- 2. 화면 전체 요소 및 버튼에 Noto Sans KR 강제 적용 -->
+  <style>
+    * {
+      font-family: 'Noto Sans KR', sans-serif !important;
+    }
+    button {
+      cursor: pointer;
+      border: 1px solid var(--color-border-default, #ccc);
+      border-radius: 4px;
+      transition: background 0.2s ease;
+    }
+  </style>
+</head>
+<body>
 
 <h2 class="sr-only">84편 영화의 D-4주~개봉주 기대지수 추이 선 그래프</h2>
 
 <div style="display:flex;align-items:center;justify-content:space-between;margin:1rem 0 .5rem;flex-wrap:wrap;gap:8px;">
   <div style="display:flex;gap:8px;flex-wrap:wrap;">
-    <button onclick="setFilter('all')" id="f-all" style="font-size:12px;padding:4px 12px;">전체 (84편)</button>
-    <button onclick="setFilter('high')" id="f-high" style="font-size:12px;padding:4px 12px;">100만↑</button>
-    <button onclick="setFilter('mid')" id="f-mid" style="font-size:12px;padding:4px 12px;">10만~100만</button>
-    <button onclick="setFilter('low')" id="f-low" style="font-size:12px;padding:4px 12px;">10만↓</button>
+    <button onclick="setFilter('all')" id="f-all" style="font-size:12px;padding:4px 12px;font-weight:500;">전체 (84편)</button>
+    <button onclick="setFilter('high')" id="f-high" style="font-size:12px;padding:4px 12px;font-weight:500;">100만↑</button>
+    <button onclick="setFilter('mid')" id="f-mid" style="font-size:12px;padding:4px 12px;font-weight:500;">10만~100만</button>
+    <button onclick="setFilter('low')" id="f-low" style="font-size:12px;padding:4px 12px;font-weight:500;">10만↓</button>
   </div>
-  <div style="font-size:12px;color:var(--color-text-tertiary);">선 위에 마우스를 올리면 영화명이 표시됩니다</div>
+  <div style="font-size:12px;color:var(--color-text-tertiary, #888780);">선 위에 마우스를 올리면 영화명이 표시됩니다</div>
 </div>
 
-<div style="display:flex;gap:16px;margin-bottom:1rem;font-size:12px;color:var(--color-text-secondary);flex-wrap:wrap;align-items:center;">
+<div style="display:flex;gap:16px;margin-bottom:1rem;font-size:12px;color:var(--color-text-secondary, #5f5e5a);flex-wrap:wrap;align-items:center;">
   <span style="display:flex;align-items:center;gap:4px;"><span style="width:20px;height:2px;background:#534AB7;display:inline-block;"></span>100만 이상</span>
   <span style="display:flex;align-items:center;gap:4px;"><span style="width:20px;height:2px;background:#1D9E75;display:inline-block;"></span>10만~100만</span>
   <span style="display:flex;align-items:center;gap:4px;"><span style="width:20px;height:2px;background:#888780;display:inline-block;opacity:0.7;"></span>10만 미만</span>
@@ -23,12 +49,15 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
-const raw = [{"movie":"퓨리오사: 매드맥스 사가","audience":1606378,"values":[265,450,899,1424,2287]},{"movie":"청춘 18X2 너에게로 이어지는 길","audience":112157,"values":[465,694,966,1314,1690]},{"movie":"설계자","audience":525369,"values":[682,1186,1596,2111,2809]},{"movie":"드림 시나리오","audience":31539,"values":[72,93,125,165,211]},{"movie":"창가의 토토","audience":15047,"values":[124,176,215,265,318]},{"movie":"인사이드 아웃2","audience":8799536,"values":[19333,21090,23715,28239,35085]},{"movie":"드라이브","audience":71749,"values":[102,128,151,187,358]},{"movie":"탈출: 프로젝트 사일런스","audience":689603,"values":[2827,3212,3699,4373,5867]},{"movie":"플라이 미 투 더 문","audience":43014,"values":[32,44,62,127,209]},{"movie":"데드풀과 울버린","audience":1977010,"values":[2674,3188,4197,5008,6662]},{"movie":"슈퍼배드 4","audience":1562001,"values":[1868,2305,2959,3818,4727]},{"movie":"리볼버","audience":249440,"values":[795,1066,1561,2201,3111]},{"movie":"와일드 로봇","audience":683504,"values":[260,312,453,526,823]},{"movie":"조커: 폴리 아 되","audience":612831,"values":[1161,1570,2704,3353,4779]},{"movie":"스마일2","audience":56072,"values":[384,402,471,601,795]},{"movie":"더러운 돈에 손대지 마라","audience":88486,"values":[563,608,689,906,1208]},{"movie":"베놈: 라스트 댄스","audience":1764011,"values":[3664,4457,5839,7584,9505]},{"movie":"아마존 활명수","audience":606612,"values":[1127,1575,2035,2613,3532]},{"movie":"롱레그스","audience":44495,"values":[246,343,386,435,530]},{"movie":"청설","audience":802462,"values":[441,605,1260,2501,3192]},{"movie":"글래디에이터 Ⅱ","audience":909990,"values":[587,829,1109,1547,2182]},{"movie":"사흘","audience":200490,"values":[369,613,1236,1836,2621]},{"movie":"위키드","audience":2244536,"values":[2029,2395,3078,3784,5060]},{"movie":"히든페이스","audience":1014864,"values":[169,316,467,1109,2324]},{"movie":"모아나2","audience":3550048,"values":[3916,4906,6148,7660,10130]},{"movie":"소방관","audience":3856695,"values":[10897,11615,12293,13294,16437]},{"movie":"1승","audience":323670,"values":[1034,1218,1422,1798,2093]},{"movie":"무파사: 라이온 킹","audience":852334,"values":[507,636,889,1226,1710]},{"movie":"하얼빈","audience":4911445,"values":[5290,6481,7679,9405,12313]},{"movie":"시빌 워: 분열의 시대","audience":113772,"values":[371,411,531,639,833]},{"movie":"수퍼 소닉3","audience":364383,"values":[104,219,501,795,998]},{"movie":"히트맨2","audience":2547448,"values":[280,541,880,1650,4893]},{"movie":"백설공주","audience":186855,"values":[130,189,360,632,965]},{"movie":"승부","audience":1430012,"values":[3638,4138,4554,5555,7870]},{"movie":"미스터 로봇","audience":27844,"values":[26,41,71,192,347]},{"movie":"야당","audience":3378166,"values":[816,1053,1375,2063,3151]},{"movie":"썬더볼츠*","audience":922453,"values":[832,1040,1300,1760,2250]},{"movie":"거룩한 밤: 데몬 헌터스","audience":777649,"values":[1307,1790,2188,3019,4783]},{"movie":"파과","audience":550585,"values":[1342,1646,2058,2759,3996]},{"movie":"미션 임파서블: 파이널 레코닝","audience":3392545,"values":[2895,3779,4558,6619,8731]},{"movie":"릴로&스티치","audience":485086,"values":[203,301,548,749,1099]},{"movie":"소주전쟁","audience":283215,"values":[318,506,718,1060,1520]},{"movie":"드래곤 길들이기","audience":1790509,"values":[1548,1734,2171,2754,3597]},{"movie":"태양의노래","audience":20973,"values":[206,260,328,386,516]},{"movie":"엘리오","audience":614869,"values":[143,252,415,782,1243]},{"movie":"28년후","audience":362321,"values":[304,425,901,1973,3152]},{"movie":"F1 더 무비","audience":5212674,"values":[313,764,1964,2819,3938]},{"movie":"쥬라기월드: 새로운시작","audience":2225177,"values":[2367,2783,3699,5027,6572]},{"movie":"슈퍼맨","audience":864399,"values":[267,553,804,969,1332]},{"movie":"괴기열차","audience":105990,"values":[144,301,541,734,1108]},{"movie":"메간 2.0","audience":22307,"values":[611,675,739,838,1003]},{"movie":"전지적독자시점","audience":1061099,"values":[3313,3691,4240,5107,7677]},{"movie":"판타스틱4 : 새로운 출발","audience":590869,"values":[564,634,687,839,1143]},{"movie":"좀비딸","audience":5635465,"values":[3196,4116,5424,8250,11706]},{"movie":"배드 가이즈 2","audience":399936,"values":[172,243,332,551,657]},{"movie":"발레리나","audience":323104,"values":[657,729,822,998,1323]},{"movie":"스머프","audience":193014,"values":[173,213,259,368,551]},{"movie":"악마가 이사왔다","audience":437359,"values":[843,1045,1268,1795,3166]},{"movie":"극장판 귀멸의 칼날 : 무한성편","audience":4801045,"values":[8029,10920,13581,15979,19446]},{"movie":"컨저링 4: 마지막 의식","audience":410831,"values":[12,281,575,1168,1983]},{"movie":"살인자 리포트","audience":351925,"values":[204,254,326,585,995]},{"movie":"얼굴","audience":1076052,"values":[412,564,721,1127,1695]},{"movie":"어쩔수가 없다","audience":2922782,"values":[3393,4928,6614,7793,9732]},{"movie":"극장판 체인소 맨 : 레제편","audience":2810256,"values":[187,1124,2201,3232,4948]},{"movie":"나쁜계집애: 달려라 하니","audience":68256,"values":[106,148,217,317,628]},{"movie":"트론: 아레스","audience":172538,"values":[509,578,644,722,921]},{"movie":"웨폰","audience":82265,"values":[202,264,305,411,712]},{"movie":"극장판 주술회전: 회옥·옥절","audience":236371,"values":[628,878,1275,1704,2229]},{"movie":"8번 출구","audience":450135,"values":[310,500,712,929,1347]},{"movie":"퍼스트라이드","audience":741498,"values":[1745,2064,2402,4608,6706]},{"movie":"블랙폰 2","audience":9352,"values":[101,106,115,132,153]},{"movie":"부고니아","audience":72948,"values":[313,365,392,445,543]},{"movie":"나우 유 씨미 3","audience":1372092,"values":[1856,2011,2244,2654,3826]},{"movie":"위키드: 포 굿","audience":971689,"values":[2461,2814,3350,3941,4611]},{"movie":"국보","audience":202249,"values":[211,258,325,428,675]},{"movie":"주토피아 2","audience":8343088,"values":[9898,11363,13307,15778,19729]},{"movie":"한란","audience":28928,"values":[138,173,282,397,514]},{"movie":"더 러닝 맨","audience":38845,"values":[117,143,178,235,265]},{"movie":"아바타: 불과 재","audience":6147400,"values":[5943,6888,9550,11679,15285]},{"movie":"만약에 우리","audience":2520717,"values":[367,445,643,2282,3928]},{"movie":"신의 악단","audience":1159538,"values":[2219,2813,5839,6118,6903]},{"movie":"마이 선샤인","audience":11948,"values":[51,131,156,173,221]},{"movie":"스폰지밥 무비: 네모바지를 찾아서","audience":86512,"values":[238,249,290,352,507]},{"movie":"마이 선샤인","audience":15320,"values":[50,131,156,173,221]}];
+const raw = [{"movie":"퓨리오사: 매드맥스 사가","audience":1606378,"values":[265,450,899,1424,2287]},{"movie":"청춘 18X2 너에게로 이어지는 길","audience":112157,"values":[465,694,966,1314,1690]},{"movie":"설계자","audience":525369,"values":[682,1186,1596,2111,2809]},{"movie":"드림 시나리오","audience":31539,"values":[72,93,125,165,211]},{"movie":"창가의 토토","audience":15047,"values":[124,176,215,265,318]},{"movie":"인사이드 아웃2","audience":8799536,"values":[19333,21090,23715,28239,35085]},{"movie":"드라이브","audience":71749,"values":[102,128,151,187,358]},{"movie":"탈출: 프로젝트 사일런스","audience":689603,"values":[2827,3212,3699,4373,5867]},{"movie":"플라이 미 투 더 문","audience":43014,"values":[32,44,62,127,209]},{"movie":"데드풀과 울버린","audience":1977010,"values":[2674,3188,4197,5008,6662]},{"movie":"슈퍼배드 4","audience":1562001,"values":[1868,2305,2959,3818,4727]},{"movie":"리볼버","audience":249440,"values":[795,1066,1561,2201,3111]},{"movie":"와일드 로봇","audience":683504,"values":[260,312,453,526,823]},{"movie":"조커: 폴리 아 되","audience":612831,"values":[1161,1570,2704,3353,4779]},{"movie":"스마일2","audience":56072,"values":[384,402,471,601,795]},{"movie":"더러운 돈에 손대지 마라","audience":88486,"values":[563,608,689,906,1208]},{"movie":"베놈: 라스트 댄스","audience":1764011,"values":[3664,4457,5839,7584,9505]},{"movie":"아마존 활명수","audience":606612,"values":[1127,1575,2035,2613,3532]},{"movie":"롱레그스","audience":44495,"values":[246,343,386,435,530]},{"movie":"청설","audience":802462,"values":[441,605,1260,2501,3192]},{"movie":"글래디에이터 Ⅱ","audience":909990,"values":[587,829,1109,1547,2182]},{"movie":"사흘","audience":200490,"values":[369,613,1236,1836,2621]},{"movie":"위키드","audience":2244536,"values":[2029,2395,3078,3784,5060]},{"movie":"히든페이스","audience":1014864,"values":[169,316,467,1109,2324]},{"movie":"모아나2","audience":3550048,"values":[3916,4906,6148,7660,10130]},{"movie":"소방관","audience":3856695,"values":[10897,11615,12293,13294,16437]},{"movie":"1승","audience":323670,"values":[1034,1218,1422,1798,2093]},{"movie":"무파사: 라이온 킹","audience":852334,"values":[507,636,889,1226,1710]},{"movie":"하얼빈","audience":4911445,"values":[5290,6481,7679,9405,12313]},{"movie":"시빌 워: 분열의 시대","audience":113772,"values":[371,411,531,639,833]},{"movie":"수퍼 소닉3","audience":364383,"values":[104,219,501,795,998]},{"movie":"히트맨2","audience":2547448,"values":[280,541,880,1650,4893]},{"movie":"백설공주","audience":186855,"values":[130,189,360,632,965]},{"movie":"승부","audience":1430012,"values":[3638,4138,4554,5555,7870]},{"movie":"미스터 로봇","audience":27844,"values":[26,41,71,192,347]},{"movie":"야당","audience":3378166,"values":[816,1053,1375,2063,3151]},{"movie":"썬더볼츠*","audience":922453,"values":[832,1040,1300,1760,2250]},{"movie":"거룩한 밤: 데몬 헌터스","audience":777649,"values":[1307,1790,2188,3019,4783]},{"movie":"파과","audience":550585,"values":[1342,1646,2058,2759,3996]},{"movie":"미션 임파서블: 파이널 레코닝","audience":3392545,"values":[2895,3779,4558,6619,8731]},{"movie":"릴로&스티치","audience":485086,"values":[203,301,548,749,1099]},{"movie":"소주전쟁","audience":283215,"values":[318,506,718,1060,1520]},{"movie":"드래곤 길들이기","audience":1790509,"values":[1548,1734,2171,2754,3597]},{"movie":"태양의노래","audience":20973,"values":[206,260,328,386,516]},{"movie":"엘리오","audience":614869,"values":[143,252,415,782,1243]},{"movie":"28년후","audience":362321,"values":[304,425,901,1973,3152]},{"movie":"F1 더 무비","audience":5212674,"values":[313,764,1964,2819,3938]},{"movie":"쥬라기월드: 새로운시작","audience":2225177,"values":[2367,2783,3699,5027,6572]},{"movie":"슈퍼맨","audience":864399,"values":[267,553,804,969,1332]},{"movie":"괴기열차","audience":105990,"values":[144,301,541,734,1108]},{"choice":"메간 2.0","audience":22307,"values":[611,675,739,838,1003]},{"movie":"전지적독자시점","audience":1061099,"values":[3313,3691,4240,5107,7677]},{"movie":"판타스틱4 : 새로운 출발","audience":590869,"values":[564,634,687,839,1143]},{"movie":"좀비딸","audience":5635465,"values":[3196,4116,5424,8250,11706]},{"movie":"배드 가이즈 2","audience":399936,"values":[172,243,332,551,657]},{"movie":"발레리나","audience":323104,"values":[657,729,822,998,1323]},{"movie":"스머프","audience":193014,"values":[173,213,259,368,551]},{"movie":"악마가 이사왔다","audience":437359,"values":[843,1045,1268,1795,3166]},{"movie":"극장판 귀멸의 칼날 : 무한성편","audience":4801045,"values":[8029,10920,13581,15979,19446]},{"movie":"컨저링 4: 마지막 의식","audience":410831,"values":[12,281,575,1168,1983]},{"movie":"살인자 리포트","audience":351925,"values":[204,254,326,585,995]},{"movie":"얼굴","audience":1076052,"values":[412,564,721,1127,1695]},{"movie":"어쩔수가 없다","audience":2922782,"values":[3393,4928,6614,7793,9732]},{"movie":"극장판 체인소 맨 : 레제편","audience":2810256,"values":[187,1124,2201,3232,4948]},{"movie":"나쁜계집애: 달려라 하니","audience":68256,"values":[106,148,217,317,628]},{"movie":"트론: 아레스","audience":172538,"values":[509,578,644,722,921]},{"movie":"웨폰","audience":82265,"values":[202,264,305,411,712]},{"movie":"극장판 주술회전: 회옥·옥절","audience":236371,"values":[628,878,1275,1704,2229]},{"movie":"8번 출구","audience":450135,"values":[310,500,712,929,1347]},{"movie":"퍼스트라이드","audience":741498,"values":[1745,2064,2402,4608,6706]},{"movie":"블랙폰 2","audience":9352,"values":[101,106,115,132,153]},{"movie":"부고ニア","audience":72948,"values":[313,365,392,445,543]},{"movie":"나우 유 씨미 3","audience":1372092,"values":[1856,2011,2244,2654,3826]},{"movie":"위키드: 포 굿","audience":971689,"values":[2461,2814,3350,3941,4611]},{"movie":"국보","audience":202249,"values":[211,258,325,428,675]},{"movie":"주토피아 2","audience":8343088,"values":[9898,11363,13307,15778,19729]},{"movie":"한란","audience":28928,"values":[138,173,282,397,514]},{"movie":"더 러닝 맨","audience":38845,"values":[117,143,178,235,265]},{"movie":"아바타: 불과 재","audience":6147400,"values":[5943,6888,9550,11679,15285]},{"movie":"만약에 우리","audience":2520717,"values":[367,445,643,2282,3928]},{"movie":"신의 악단","audience":1159538,"values":[2219,2813,5839,6118,6903]},{"movie":"마이 선샤인","audience":11948,"values":[51,131,156,173,221]},{"movie":"스폰지밥 무비: 네모바지를 찾아서","audience":86512,"values":[238,249,290,352,507]},{"movie":"마이 선샤인","audience":15320,"values":[50,131,156,173,221]}];
 
 const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
 const gridColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
 const tickColor = isDark ? '#888780' : '#888780';
 const labelColor = isDark ? '#B4B2A9' : '#5F5E5A';
+
+// 차트 글로벌 폰트 패밀리 기본값 설정 (Noto Sans KR 적용)
+Chart.defaults.font.family = "'Noto Sans KR', sans-serif";
 
 function getColor(audience, alpha) {
   if(audience >= 1000000) return `rgba(83,74,183,${alpha})`;
@@ -77,6 +106,9 @@ function renderChart(filter) {
         tooltip: {
           mode: 'nearest',
           intersect: true,
+          // 툴팁 내부 폰트 스타일 제어
+          titleFont: { size: 13, weight: '700' },
+          bodyFont: { size: 12 },
           callbacks: {
             title: items => items[0].dataset.label,
             label: item => {
@@ -88,12 +120,12 @@ function renderChart(filter) {
       },
       scales: {
         x: {
-          title: { display: true, text: '개봉 전후 시점', font:{size:12}, color:labelColor },
+          title: { display: true, text: '개봉 전후 시점', font:{size:12, weight:'500'}, color:labelColor },
           ticks: { color:tickColor, font:{size:12} },
           grid: { color:gridColor }
         },
         y: {
-          title: { display: true, text: '기대지수', font:{size:12}, color:labelColor },
+          title: { display: true, text: '기대지수', font:{size:12, weight:'500'}, color:labelColor },
           ticks: {
             color:tickColor, font:{size:11},
             callback: v => v >= 1000 ? Math.round(v/1000)+'K' : v
@@ -111,10 +143,12 @@ function setFilter(f) {
     btn.style.background = 'transparent';
     btn.style.color = 'var(--color-text-primary)';
   });
-  document.getElementById('f-'+f).style.background = 'var(--color-background-secondary)';
+  document.getElementById('f-'+f).style.background = 'var(--color-background-secondary, #eee)';
   renderChart(f);
 }
 
 renderChart('all');
 setFilter('all');
 </script>
+</body>
+</html>
