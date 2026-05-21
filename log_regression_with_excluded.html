@@ -1,63 +1,75 @@
-<h2 class="sr-only">네이버 기대지수를 통한 최종 관객수 예측 모델</h2>
+<!-- 구글 Noto Sans KR 웹폰트 로드 -->
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+  
+  /* 대시보드 전체 컨테이너에 폰트 적용 */
+  .dashboard-container {
+    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+</style>
 
-<!-- 요약 통계 대시보드 -->
-<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:1rem 0 1rem;">
-  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.9rem 1rem;">
-    <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px;">표본 수</div>
-    <div style="font-size:22px;font-weight:500;">144</div>
-  </div>
-  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.9rem 1rem;">
-    <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px;">R² (로그 공간)</div>
-    <div style="font-size:22px;font-weight:500;">0.826</div>
-  </div>
-  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.9rem 1rem;">
-    <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px;">상관계수 R</div>
-    <div style="font-size:22px;font-weight:500;">0.909</div>
-  </div>
-  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.9rem 1rem;">
-    <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px;">p-value</div>
-    <div style="font-size:22px;font-weight:500;">&lt; 0.001</div>
-  </div>
-</div>
+<div class="dashboard-container">
+  <h2 class="sr-only">네이버 기대지수를 통한 최종 관객수 예측 모델</h2>
 
-<!-- 회귀 방정식 안내 -->
-<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.65rem 1rem;margin-bottom:1.2rem;font-size:13px;color:var(--color-text-secondary);">
-  <span style="font-weight:500;color:var(--color-text-primary);">로그 회귀식</span>&nbsp;&nbsp;log₁₀(관객수) = <strong>1.2347 × log₁₀(기대지수)</strong> + 1.5552
-</div>
-
-<!-- 시각화 차트 영역 -->
-<div style="position:relative;width:100%;height:400px;margin-bottom:0.5rem;">
-  <canvas id="mainChart" role="img" aria-label="로그 변환 회귀 산점도 (n=144). 지정 영화 16편 별 표시.">지정 영화 16편 강조 표시 포함 로그 변환 회귀 산점도</canvas>
-</div>
-
-<!-- 범례 -->
-<div style="display:flex;gap:20px;margin:10px 0 2rem;font-size:12px;color:var(--color-text-secondary);align-items:center;">
-  <span style="display:flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;border-radius:50%;background:rgba(83,74,183,0.4);border:0.8px solid #534AB7;display:inline-block;"></span>일반 영화 (128편)</span>
-  <span style="display:flex;align-items:center;gap:5px;"><span style="font-size:14px;color:#D85A30;">★</span>지정 영화 (16편)</span>
-  <span style="display:flex;align-items:center;gap:5px;"><span style="width:22px;height:2px;background:#1D9E75;display:inline-block;border-radius:1px;"></span>회귀선</span>
-</div>
-
-<!-- 데이터 테이블 및 필터 제어 -->
-<div style="border-top:0.5px solid var(--color-border-tertiary);padding-top:1.5rem;margin-top:.5rem;">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;gap:12px;flex-wrap:wrap;">
-    <p style="font-size:14px;font-weight:500;margin:0;color:var(--color-text-primary);">개봉주 기대지수 없어 분석 제외된 영화 <span style="font-weight:400;color:var(--color-text-secondary);font-size:13px;">41편</span></p>
-    <div style="display:flex;gap:4px;background:var(--color-background-secondary);padding:2px;border-radius:var(--border-radius-sm);">
-      <button id="btnAll" onclick="filterTable('all')" style="font-size:12px;padding:4px 12px;border:none;border-radius:calc(var(--border-radius-sm) - 1px);cursor:pointer;background:transparent;color:var(--color-text-primary);">전체</button>
-      <button id="btnHasY" onclick="filterTable('hasY')" style="font-size:12px;padding:4px 12px;border:none;border-radius:calc(var(--border-radius-sm) - 1px);cursor:pointer;background:transparent;color:var(--color-text-primary);">관객수 있음</button>
-      <button id="btnNoY" onclick="filterTable('noY')" style="font-size:12px;padding:4px 12px;border:none;border-radius:calc(var(--border-radius-sm) - 1px);cursor:pointer;background:transparent;color:var(--color-text-primary);">관객수 없음</button>
+  <!-- 요약 통계 대시보드 -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:1rem 0 1rem;">
+    <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.9rem 1rem;">
+      <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px;">표본 수</div>
+      <div style="font-size:22px;font-weight:500;">144</div>
+    </div>
+    <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.9rem 1rem;">
+      <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px;">R² (로그 공간)</div>
+      <div style="font-size:22px;font-weight:500;">0.826</div>
+    </div>
+    <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.9rem 1rem;">
+      <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px;">상관계수 R</div>
+      <div style="font-size:22px;font-weight:500;">0.909</div>
+    </div>
+    <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.9rem 1rem;">
+      <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px;">p-value</div>
+      <div style="font-size:22px;font-weight:500;">&lt; 0.001</div>
     </div>
   </div>
 
-  <div style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);overflow:hidden;">
-    <table id="excludedTable" style="width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;">
-      <thead>
-        <tr style="background:var(--color-background-secondary);">
-          <th style="padding:10px 12px;text-align:left;font-weight:500;color:var(--color-text-secondary);width:65%;border-bottom:0.5px solid var(--color-border-tertiary);">영화명</th>
-          <th style="padding:10px 12px;text-align:right;font-weight:500;color:var(--color-text-secondary);width:35%;border-bottom:0.5px solid var(--color-border-tertiary);">최종 관객수</th>
-        </tr>
-      </thead>
-      <tbody id="excludedBody"></tbody>
-    </table>
+  <!-- 회귀 방정식 안내 -->
+  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.65rem 1rem;margin-bottom:1.2rem;font-size:13px;color:var(--color-text-secondary);">
+    <span style="font-weight:500;color:var(--color-text-primary);">로그 회귀식</span>&nbsp;&nbsp;log₁₀(관객수) = <strong>1.2347 × log₁₀(기대지수)</strong> + 1.5552
+  </div>
+
+  <!-- 시각화 차트 영역 -->
+  <div style="position:relative;width:100%;height:400px;margin-bottom:0.5rem;">
+    <canvas id="mainChart" role="img" aria-label="로그 변환 회귀 산점도 (n=144). 지정 영화 16편 별 표시.">지정 영화 16편 강조 표시 포함 로그 변환 회귀 산점도</canvas>
+  </div>
+
+  <!-- 범례 -->
+  <div style="display:flex;gap:20px;margin:10px 0 2rem;font-size:12px;color:var(--color-text-secondary);align-items:center;">
+    <span style="display:flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;border-radius:50%;background:rgba(83,74,183,0.4);border:0.8px solid #534AB7;display:inline-block;"></span>일반 영화 (128편)</span>
+    <span style="display:flex;align-items:center;gap:5px;"><span style="font-size:14px;color:#D85A30;">★</span>지정 영화 (16편)</span>
+    <span style="display:flex;align-items:center;gap:5px;"><span style="width:22px;height:2px;background:#1D9E75;display:inline-block;border-radius:1px;"></span>회귀선</span>
+  </div>
+
+  <!-- 데이터 테이블 및 필터 제어 -->
+  <div style="border-top:0.5px solid var(--color-border-tertiary);padding-top:1.5rem;margin-top:.5rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;gap:12px;flex-wrap:wrap;">
+      <p style="font-size:14px;font-weight:500;margin:0;color:var(--color-text-primary);">개봉주 기대지수 없어 분석 제외된 영화 <span style="font-weight:400;color:var(--color-text-secondary);font-size:13px;">41편</span></p>
+      <div style="display:flex;gap:4px;background:var(--color-background-secondary);padding:2px;border-radius:var(--border-radius-sm);">
+        <button id="btnAll" onclick="filterTable('all')" style="font-family:inherit;font-size:12px;padding:4px 12px;border:none;border-radius:calc(var(--border-radius-sm) - 1px);cursor:pointer;background:transparent;color:var(--color-text-primary);">전체</button>
+        <button id="btnHasY" onclick="filterTable('hasY')" style="font-family:inherit;font-size:12px;padding:4px 12px;border:none;border-radius:calc(var(--border-radius-sm) - 1px);cursor:pointer;background:transparent;color:var(--color-text-primary);">관객수 있음</button>
+        <button id="btnNoY" onclick="filterTable('noY')" style="font-family:inherit;font-size:12px;padding:4px 12px;border:none;border-radius:calc(var(--border-radius-sm) - 1px);cursor:pointer;background:transparent;color:var(--color-text-primary);">관객수 없음</button>
+      </div>
+    </div>
+
+    <div style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);overflow:hidden;">
+      <table id="excludedTable" style="width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;">
+        <thead>
+          <tr style="background:var(--color-background-secondary);">
+            <th style="padding:10px 12px;text-align:left;font-weight:500;color:var(--color-text-secondary);width:65%;border-bottom:0.5px solid var(--color-border-tertiary);">영화명</th>
+            <th style="padding:10px 12px;text-align:right;font-weight:500;color:var(--color-text-secondary);width:35%;border-bottom:0.5px solid var(--color-border-tertiary);">최종 관객수</th>
+          </tr>
+        </thead>
+        <tbody id="excludedBody"></tbody>
+      </table>
+    </div>
   </div>
 </div>
 
@@ -143,14 +155,21 @@ new Chart(document.getElementById('mainChart'), {
     responsive:true, maintainAspectRatio:false,
     plugins: {
       legend:{ display:false },
-      tooltip:{ callbacks:{ label: ctx => {
-        if(ctx.datasetIndex<=1){ const d=ctx.raw; return [d.movie, `기대지수: ${Math.round(Math.pow(10,d.x)).toLocaleString()}`, `관객수: ${Math.round(Math.pow(10,d.y)).toLocaleString()}명`]; }
-        return null;
-      }}}
+      tooltip:{ 
+        /* 툴팁 내 Noto Sans KR 폰트 적용 */
+        titleFont: { family: "'Noto Sans KR'" },
+        bodyFont: { family: "'Noto Sans KR'" },
+        footerFont: { family: "'Noto Sans KR'" },
+        callbacks:{ label: ctx => {
+          if(ctx.datasetIndex<=1){ const d=ctx.raw; return [d.movie, `기대지수: ${Math.round(Math.pow(10,d.x)).toLocaleString()}`, `관객수: ${Math.round(Math.pow(10,d.y)).toLocaleString()}명`]; }
+          return null;
+        }}
+      }
     },
     scales: {
-      x:{ type:'linear', min:xMin, max:xMax, title:{display:true, text:'log₁₀(개봉주 기대지수)', font:{size:12}, color:labelColor}, ticks:{color:tickColor, font:{size:11}, callback: v=>origLabel(v,false)}, grid:{color:gridColor} },
-      y:{ type:'linear', title:{display:true, text:'log₁₀(최종 관객수)', font:{size:12}, color:labelColor}, ticks:{color:tickColor, font:{size:11}, callback: v=>origLabel(v,true)}, grid:{color:gridColor} }
+      /* 축 레이블 및 인덱스 텍스트에 Noto Sans KR 폰트 적용 */
+      x:{ type:'linear', min:xMin, max:xMax, title:{display:true, text:'log₁₀(개봉주 기대지수)', font:{size:12, family: "'Noto Sans KR'"}, color:labelColor}, ticks:{color:tickColor, font:{size:11, family: "'Noto Sans KR'"}, callback: v=>origLabel(v,false)}, grid:{color:gridColor} },
+      y:{ type:'linear', title:{display:true, text:'log₁₀(최종 관객수)', font:{size:12, family: "'Noto Sans KR'"}, color:labelColor}, ticks:{color:tickColor, font:{size:11, family: "'Noto Sans KR'"}, callback: v=>origLabel(v,true)}, grid:{color:gridColor} }
     }
   }
 });
