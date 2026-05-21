@@ -1,0 +1,305 @@
+
+<h2 class="sr-only">기대지수 상승 패턴 유형별 최종 관객수 비교 분석</h2>
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:1rem 0 1.5rem;">
+  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.9rem 1rem;border-left:3px solid #534AB7;border-radius:0 var(--border-radius-md) var(--border-radius-md) 0;">
+    <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:2px;">후반급등형</div>
+    <div style="font-size:20px;font-weight:500;">34편</div>
+    <div style="font-size:12px;color:var(--color-text-secondary);margin-top:4px;">중앙값 57만 · 평균 128만</div>
+  </div>
+  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.9rem 1rem;border-left:3px solid #1D9E75;border-radius:0 var(--border-radius-md) var(--border-radius-md) 0;">
+    <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:2px;">완만형</div>
+    <div style="font-size:20px;font-weight:500;">34편</div>
+    <div style="font-size:12px;color:var(--color-text-secondary);margin-top:4px;">중앙값 61만 · 평균 128만</div>
+  </div>
+  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.9rem 1rem;border-left:3px solid #BA7517;border-radius:0 var(--border-radius-md) var(--border-radius-md) 0;">
+    <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:2px;">전반급등형</div>
+    <div style="font-size:20px;font-weight:500;">16편</div>
+    <div style="font-size:12px;color:var(--color-text-secondary);margin-top:4px;">중앙값 51만 · 평균 128만</div>
+  </div>
+</div>
+
+<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.65rem 1rem;margin-bottom:1.2rem;font-size:13px;color:var(--color-text-secondary);">
+  <span style="font-weight:500;color:var(--color-text-primary);">ANOVA 결과</span>&nbsp;&nbsp;F = 0.0363 · p = 0.964 (로그 변환 기준)&nbsp;&nbsp;→&nbsp;&nbsp;세 그룹 간 관객수 차이 <span style="color:var(--color-text-warning);font-weight:500;">통계적으로 유의미하지 않음</span>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:1.5rem;">
+  <div>
+    <p style="font-size:12px;color:var(--color-text-secondary);margin:0 0 6px;">패턴 유형별 관객수 분포 (로그 척도)</p>
+    <div style="position:relative;height:260px;">
+      <canvas id="boxCanvas" role="img" aria-label="세 패턴 유형별 관객수 박스플롯">후반급등형·완만형·전반급등형 관객수 분포 비교</canvas>
+    </div>
+  </div>
+  <div>
+    <p style="font-size:12px;color:var(--color-text-secondary);margin:0 0 6px;">패턴 유형별 평균 기대지수 궤적</p>
+    <div style="position:relative;height:260px;">
+      <canvas id="trajChart" role="img" aria-label="세 패턴 유형별 평균 기대지수 변화 궤적">패턴 유형별 D-4주~개봉주 평균 기대지수 추이</canvas>
+    </div>
+  </div>
+</div>
+
+<div style="border-top:0.5px solid var(--color-border-tertiary);padding-top:1.2rem;">
+  <div style="display:flex;gap:8px;margin-bottom:.8rem;">
+    <button onclick="showGroup('후반급등형')" id="g-후반급등형" style="font-size:12px;padding:4px 12px;">후반급등형</button>
+    <button onclick="showGroup('완만형')" id="g-완만형" style="font-size:12px;padding:4px 12px;">완만형</button>
+    <button onclick="showGroup('전반급등형')" id="g-전반급등형" style="font-size:12px;padding:4px 12px;">전반급등형</button>
+  </div>
+  <div style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);overflow:hidden;">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;">
+      <thead>
+        <tr style="background:var(--color-background-secondary);">
+          <th style="padding:7px 12px;text-align:left;font-weight:500;color:var(--color-text-secondary);width:42%;border-bottom:0.5px solid var(--color-border-tertiary);">영화명</th>
+          <th style="padding:7px 12px;text-align:right;font-weight:500;color:var(--color-text-secondary);width:26%;border-bottom:0.5px solid var(--color-border-tertiary);">최종 관객수</th>
+          <th style="padding:7px 12px;text-align:right;font-weight:500;color:var(--color-text-secondary);width:16%;border-bottom:0.5px solid var(--color-border-tertiary);">전반 상승률</th>
+          <th style="padding:7px 12px;text-align:right;font-weight:500;color:var(--color-text-secondary);width:16%;border-bottom:0.5px solid var(--color-border-tertiary);">후반 상승률</th>
+        </tr>
+      </thead>
+      <tbody id="groupBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+const gridColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
+const tickColor = isDark ? '#888780' : '#888780';
+const labelColor = isDark ? '#B4B2A9' : '#5F5E5A';
+
+const groups = {
+  '후반급등형': [
+    {movie:'인사이드 아웃2',audience:8799536,early:0.11,late:0.22,values:[19333,21090,23715,28239,35085]},
+    {movie:'좀비딸',audience:5635465,early:0.30,late:0.47,values:[3196,4116,5424,8250,11706]},
+    {movie:'소방관',audience:3856695,early:0.06,late:0.16,values:[10897,11615,12293,13294,16437]},
+    {movie:'미션 임파서블: 파이널 레코닝',audience:3392545,early:0.26,late:0.39,values:[2895,3779,4558,6619,8731]},
+    {movie:'야당',audience:3378166,early:0.30,late:0.51,values:[816,1053,1375,2063,3151]},
+    {movie:'히트맨2',audience:2547448,early:0.78,late:1.42,values:[280,541,880,1650,4893]},
+    {movie:'만약에 우리',audience:2520717,early:0.33,late:1.64,values:[367,445,643,2282,3928]},
+    {movie:'드래곤 길들이기',audience:1790509,early:0.19,late:0.29,values:[1548,1734,2171,2754,3597]},
+    {movie:'승부',audience:1430012,early:0.12,late:0.32,values:[3638,4138,4554,5555,7870]},
+    {movie:'나우 유 씨미 3',audience:1372092,early:0.10,late:0.31,values:[1856,2011,2244,2654,3826]},
+    {movie:'얼굴',audience:1076052,early:0.32,late:0.53,values:[412,564,721,1127,1695]},
+    {movie:'전지적독자시점',audience:1061099,early:0.13,late:0.35,values:[3313,3691,4240,5107,7677]},
+    {movie:'히든페이스',audience:1014864,early:0.67,late:1.24,values:[169,316,467,1109,2324]},
+    {movie:'거룩한 밤: 데몬 헌터스',audience:777649,early:0.30,late:0.48,values:[1307,1790,2188,3019,4783]},
+    {movie:'퍼스트라이드',audience:741498,early:0.17,late:0.69,values:[1745,2064,2402,4608,6706]},
+    {movie:'탈출: 프로젝트 사일런스',audience:689603,early:0.14,late:0.26,values:[2827,3212,3699,4373,5867]},
+    {movie:'판타스틱4 : 새로운 출발',audience:590869,early:0.10,late:0.29,values:[564,634,687,839,1143]},
+    {movie:'파과',audience:550585,early:0.24,late:0.39,values:[1342,1646,2058,2759,3996]},
+    {movie:'악마가 이사왔다',audience:437359,early:0.23,late:0.59,values:[843,1045,1268,1795,3166]},
+    {movie:'살인자 리포트',audience:351925,early:0.26,late:0.75,values:[204,254,326,585,995]},
+    {movie:'발레리나',audience:323104,early:0.12,late:0.27,values:[657,729,822,998,1323]},
+    {movie:'국보',audience:202249,early:0.24,late:0.45,values:[211,258,325,428,675]},
+    {movie:'스머프',audience:193014,early:0.22,late:0.46,values:[173,213,259,368,551]},
+    {movie:'트론: 아레스',audience:172538,early:0.12,late:0.20,values:[509,578,644,722,921]},
+    {movie:'더러운 돈에 손대지 마라',audience:88486,early:0.11,late:0.32,values:[563,608,689,906,1208]},
+    {movie:'스폰지밥 무비: 네모바지를 찾아서',audience:86512,early:0.11,late:0.33,values:[238,249,290,352,507]},
+    {movie:'웨폰',audience:82265,early:0.23,late:0.54,values:[202,264,305,411,712]},
+    {movie:'드라이브',audience:71749,early:0.22,late:0.58,values:[102,128,151,187,358]},
+    {movie:'나쁜계집애: 달려라 하니',audience:68256,early:0.43,late:0.72,values:[106,148,217,317,628]},
+    {movie:'스마일2',audience:56072,early:0.11,late:0.30,values:[384,402,471,601,795]},
+    {movie:'플라이 미 투 더 문',audience:43014,early:0.39,late:0.85,values:[32,44,62,127,209]},
+    {movie:'미스터 로봇',audience:27844,early:0.65,late:1.26,values:[26,41,71,192,347]},
+    {movie:'메간 2.0',audience:22307,early:0.10,late:0.17,values:[611,675,739,838,1003]},
+    {movie:'블랙폰 2',audience:9352,early:0.07,late:0.15,values:[101,106,115,132,153]}
+  ],
+  '완만형': [
+    {movie:'주토피아 2',audience:8343088,early:0.16,late:0.22,values:[9898,11363,13307,15778,19729]},
+    {movie:'아바타: 불과 재',audience:6147400,early:0.27,late:0.27,values:[5943,6888,9550,11679,15285]},
+    {movie:'하얼빈',audience:4911445,early:0.20,late:0.27,values:[5290,6481,7679,9405,12313]},
+    {movie:'모아나2',audience:3550048,early:0.25,late:0.28,values:[3916,4906,6148,7660,10130]},
+    {movie:'위키드',audience:2244536,early:0.23,late:0.28,values:[2029,2395,3078,3784,5060]},
+    {movie:'쥬라기월드: 새로운시작',audience:2225177,early:0.25,late:0.33,values:[2367,2783,3699,5027,6572]},
+    {movie:'데드풀과 울버린',audience:1977010,early:0.25,late:0.26,values:[2674,3188,4197,5008,6662]},
+    {movie:'베놈: 라스트 댄스',audience:1764011,early:0.26,late:0.28,values:[3664,4457,5839,7584,9505]},
+    {movie:'퓨리오사: 매드맥스 사가',audience:1606378,early:0.85,late:0.60,values:[265,450,899,1424,2287]},
+    {movie:'슈퍼배드 4',audience:1562001,early:0.26,late:0.26,values:[1868,2305,2959,3818,4727]},
+    {movie:'위키드: 포 굿',audience:971689,early:0.17,late:0.17,values:[2461,2814,3350,3941,4611]},
+    {movie:'썬더볼츠*',audience:922453,early:0.25,late:0.32,values:[832,1040,1300,1760,2250]},
+    {movie:'글래디에이터 Ⅱ',audience:909990,early:0.38,late:0.40,values:[587,829,1109,1547,2182]},
+    {movie:'무파사: 라이온 킹',audience:852334,early:0.33,late:0.39,values:[507,636,889,1226,1710]},
+    {movie:'청설',audience:802462,early:0.73,late:0.63,values:[441,605,1260,2501,3192]},
+    {movie:'와일드 로봇',audience:683504,early:0.33,late:0.36,values:[260,312,453,526,823]},
+    {movie:'엘리오',audience:614869,early:0.70,late:0.74,values:[143,252,415,782,1243]},
+    {movie:'아마존 활명수',audience:606612,early:0.34,late:0.32,values:[1127,1575,2035,2613,3532]},
+    {movie:'8번 출구',audience:450135,early:0.52,late:0.38,values:[310,500,712,929,1347]},
+    {movie:'배드 가이즈 2',audience:399936,early:0.39,late:0.43,values:[172,243,332,551,657]},
+    {movie:'28년후',audience:362321,early:0.76,late:0.89,values:[304,425,901,1973,3152]},
+    {movie:'1승',audience:323670,early:0.17,late:0.21,values:[1034,1218,1422,1798,2093]},
+    {movie:'소주전쟁',audience:283215,early:0.51,late:0.46,values:[318,506,718,1060,1520]},
+    {movie:'리볼버',audience:249440,early:0.40,late:0.41,values:[795,1066,1561,2201,3111]},
+    {movie:'극장판 주술회전: 회옥·옥절',audience:236371,early:0.43,late:0.32,values:[628,878,1275,1704,2229]},
+    {movie:'백설공주',audience:186855,early:0.68,late:0.64,values:[130,189,360,632,965]},
+    {movie:'시빌 워: 분열의 시대',audience:113772,early:0.20,late:0.25,values:[371,411,531,639,833]},
+    {movie:'청춘 18X2 너에게로 이어지는 길',audience:112157,early:0.44,late:0.32,values:[465,694,966,1314,1690]},
+    {movie:'부고니아',audience:72948,early:0.12,late:0.18,values:[313,365,392,445,543]},
+    {movie:'더 러닝 맨',audience:38845,early:0.23,late:0.22,values:[117,143,178,235,265]},
+    {movie:'드림 시나리오',audience:31539,early:0.32,late:0.30,values:[72,93,125,165,211]},
+    {movie:'한란',audience:28928,early:0.44,late:0.35,values:[138,173,282,397,514]},
+    {movie:'태양의노래',audience:20973,early:0.26,late:0.26,values:[206,260,328,386,516]},
+    {movie:'창가의 토토',audience:15047,early:0.32,late:0.22,values:[124,176,215,265,318]}
+  ],
+  '전반급등형': [
+    {movie:'F1 더 무비',audience:5212674,early:1.51,late:0.42,values:[313,764,1964,2819,3938]},
+    {movie:'극장판 귀멸의 칼날 : 무한성편',audience:4801045,early:0.30,late:0.20,values:[8029,10920,13581,15979,19446]},
+    {movie:'어쩔수가 없다',audience:2922782,early:0.40,late:0.21,values:[3393,4928,6614,7793,9732]},
+    {movie:'극장판 체인소 맨 : 레제편',audience:2810256,early:2.98,late:0.50,values:[187,1124,2201,3232,4948]},
+    {movie:'신의 악단',audience:1159538,early:0.67,late:0.09,values:[2219,2813,5839,6118,6903]},
+    {movie:'슈퍼맨',audience:864399,early:0.76,late:0.29,values:[267,553,804,969,1332]},
+    {movie:'조커: 폴리 아 되',audience:612831,early:0.54,late:0.33,values:[1161,1570,2704,3353,4779]},
+    {movie:'설계자',audience:525369,early:0.54,late:0.33,values:[682,1186,1596,2111,2809]},
+    {movie:'릴로&스티치',audience:485086,early:0.65,late:0.42,values:[203,301,548,749,1099]},
+    {movie:'컨저링 4: 마지막 의식',audience:410831,early:11.73,late:0.86,values:[12,281,575,1168,1983]},
+    {movie:'수퍼 소닉3',audience:364383,early:1.20,late:0.42,values:[104,219,501,795,998]},
+    {movie:'사흘',audience:200490,early:0.84,late:0.46,values:[369,613,1236,1836,2621]},
+    {movie:'괴기열차',audience:105990,early:0.94,late:0.43,values:[144,301,541,734,1108]},
+    {movie:'롱레그스',audience:44495,early:0.26,late:0.17,values:[246,343,386,435,530]},
+    {movie:'마이 선샤인',audience:15320,early:0.91,late:0.19,values:[50,131,156,173,221]},
+    {movie:'마이 선샤인',audience:11948,early:0.88,late:0.19,values:[51,131,156,173,221]}
+  ]
+};
+
+function avgValues(arr) {
+  return [0,1,2,3,4].map(i => Math.round(arr.reduce((s,d) => s+d.values[i], 0) / arr.length));
+}
+
+const avg후반 = avgValues(groups['후반급등형']);
+const avg완만 = avgValues(groups['완만형']);
+const avg전반 = avgValues(groups['전반급등형']);
+
+function boxStats(arr) {
+  const vals = arr.map(d => Math.log10(d.audience)).sort((a,b)=>a-b);
+  const n = vals.length;
+  const q1 = vals[Math.floor(n*0.25)];
+  const q2 = vals[Math.floor(n*0.5)];
+  const q3 = vals[Math.floor(n*0.75)];
+  const iqr = q3 - q1;
+  const wlo = vals.find(v => v >= q1 - 1.5*iqr) ?? vals[0];
+  const whi = [...vals].reverse().find(v => v <= q3 + 1.5*iqr) ?? vals[n-1];
+  const outliers = vals.filter(v => v < wlo || v > whi);
+  return {q1, q2, q3, wlo, whi, outliers};
+}
+
+const bStats = {
+  '후반급등형': boxStats(groups['후반급등형']),
+  '완만형': boxStats(groups['완만형']),
+  '전반급등형': boxStats(groups['전반급등형'])
+};
+
+const boxCanvas = document.getElementById('boxCanvas');
+const bCtx = boxCanvas.getContext('2d');
+
+function drawBoxPlots() {
+  const w = boxCanvas.offsetWidth || 300;
+  const h = 260;
+  const dpr = window.devicePixelRatio || 1;
+  boxCanvas.width = w * dpr;
+  boxCanvas.height = h * dpr;
+  bCtx.scale(dpr, dpr);
+
+  const pad = {l:50, r:20, t:16, b:40};
+  const chartH = h - pad.t - pad.b;
+  const chartW = w - pad.l - pad.r;
+  const allVals = [3, 7.1];
+  const yMin = 3, yMax = 7.2;
+
+  function py(v) { return pad.t + (1 - (v - yMin)/(yMax - yMin)) * chartH; }
+
+  bCtx.clearRect(0, 0, w, h);
+
+  const colors = {'후반급등형':'#534AB7','완만형':'#1D9E75','전반급등형':'#BA7517'};
+  const labels = ['후반급등형','완만형','전반급등형'];
+  const xs = [pad.l + chartW*0.2, pad.l + chartW*0.5, pad.l + chartW*0.8];
+  const boxW = 36;
+
+  [4,5,6,7].forEach(v => {
+    bCtx.strokeStyle = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
+    bCtx.lineWidth = 0.5;
+    bCtx.beginPath(); bCtx.moveTo(pad.l, py(v)); bCtx.lineTo(w - pad.r, py(v)); bCtx.stroke();
+    bCtx.fillStyle = isDark ? '#888780' : '#888780';
+    bCtx.font = '10px sans-serif';
+    bCtx.textAlign = 'right';
+    const lbl = v>=6 ? (Math.pow(10,v)/1000000).toFixed(0)+'M' : (Math.pow(10,v)/1000).toFixed(0)+'K';
+    bCtx.fillText(lbl, pad.l - 4, py(v) + 3);
+  });
+
+  labels.forEach((label, i) => {
+    const s = bStats[label];
+    const x = xs[i];
+    const col = colors[label];
+    const fillCol = isDark ? col+'55' : col+'33';
+
+    bCtx.strokeStyle = col;
+    bCtx.lineWidth = 1;
+    bCtx.beginPath(); bCtx.moveTo(x, py(s.wlo)); bCtx.lineTo(x, py(s.q1)); bCtx.stroke();
+    bCtx.beginPath(); bCtx.moveTo(x, py(s.whi)); bCtx.lineTo(x, py(s.q3)); bCtx.stroke();
+    bCtx.beginPath(); bCtx.moveTo(x - boxW/2 + 4, py(s.wlo)); bCtx.lineTo(x + boxW/2 - 4, py(s.wlo)); bCtx.stroke();
+    bCtx.beginPath(); bCtx.moveTo(x - boxW/2 + 4, py(s.whi)); bCtx.lineTo(x + boxW/2 - 4, py(s.whi)); bCtx.stroke();
+
+    bCtx.fillStyle = fillCol;
+    bCtx.fillRect(x - boxW/2, py(s.q3), boxW, py(s.q1) - py(s.q3));
+    bCtx.strokeStyle = col;
+    bCtx.strokeRect(x - boxW/2, py(s.q3), boxW, py(s.q1) - py(s.q3));
+
+    bCtx.strokeStyle = col;
+    bCtx.lineWidth = 2;
+    bCtx.beginPath(); bCtx.moveTo(x - boxW/2, py(s.q2)); bCtx.lineTo(x + boxW/2, py(s.q2)); bCtx.stroke();
+
+    s.outliers.forEach(v => {
+      bCtx.fillStyle = col;
+      bCtx.beginPath(); bCtx.arc(x, py(v), 3, 0, Math.PI*2); bCtx.fill();
+    });
+
+    bCtx.fillStyle = isDark ? '#B4B2A9' : '#5F5E5A';
+    bCtx.font = '11px sans-serif';
+    bCtx.textAlign = 'center';
+    bCtx.fillText(label, x, h - pad.b + 14);
+  });
+}
+
+window.addEventListener('load', drawBoxPlots);
+
+new Chart(document.getElementById('trajChart'), {
+  type: 'line',
+  data: {
+    labels: ['D-4주','D-3주','D-2주','D-1주','개봉주'],
+    datasets: [
+      { label:'후반급등형', data: avg후반, borderColor:'#534AB7', backgroundColor:'transparent', borderWidth:2, pointRadius:3, tension:0.3 },
+      { label:'완만형',     data: avg완만, borderColor:'#1D9E75', backgroundColor:'transparent', borderWidth:2, pointRadius:3, tension:0.3 },
+      { label:'전반급등형', data: avg전반, borderColor:'#BA7517', backgroundColor:'transparent', borderWidth:2, pointRadius:3, tension:0.3 }
+    ]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false,
+    plugins: {
+      legend:{ display:false },
+      tooltip:{ callbacks:{ label: ctx => `${ctx.dataset.label}: ${ctx.raw.toLocaleString()}` }}
+    },
+    scales: {
+      x: { ticks:{color:tickColor, font:{size:11}}, grid:{color:gridColor} },
+      y: { ticks:{color:tickColor, font:{size:11}, callback: v => v>=1000 ? Math.round(v/1000)+'K':v}, grid:{color:gridColor} }
+    }
+  }
+});
+
+function showGroup(g) {
+  ['후반급등형','완만형','전반급등형'].forEach(id => {
+    document.getElementById('g-'+id).style.background = 'transparent';
+  });
+  document.getElementById('g-'+g).style.background = 'var(--color-background-secondary)';
+  const tbody = document.getElementById('groupBody');
+  const colMap = {'후반급등형':'#534AB7','완만형':'#1D9E75','전반급등형':'#BA7517'};
+  const col = colMap[g];
+  tbody.innerHTML = groups[g].sort((a,b)=>b.audience-a.audience).map((d,i) => {
+    const bg = i%2===0 ? '' : 'background:var(--color-background-secondary);';
+    return `<tr style="${bg}border-bottom:0.5px solid var(--color-border-tertiary);">
+      <td style="padding:6px 12px;color:var(--color-text-primary);">${d.movie}</td>
+      <td style="padding:6px 12px;text-align:right;color:var(--color-text-primary);">${d.audience.toLocaleString()}명</td>
+      <td style="padding:6px 12px;text-align:right;color:var(--color-text-secondary);">${(d.early*100).toFixed(0)}%</td>
+      <td style="padding:6px 12px;text-align:right;font-weight:500;color:${col};">${(d.late*100).toFixed(0)}%</td>
+    </tr>`;
+  }).join('');
+}
+
+showGroup('후반급등형');
+</script>

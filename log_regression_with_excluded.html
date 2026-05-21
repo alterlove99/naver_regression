@@ -1,0 +1,187 @@
+
+<h2 class="sr-only">로그 변환 회귀 분석 및 개봉주 기대지수 없어 제외된 영화 목록</h2>
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:1rem 0 1rem;">
+  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.9rem 1rem;">
+    <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px;">표본 수</div>
+    <div style="font-size:22px;font-weight:500;">144</div>
+  </div>
+  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.9rem 1rem;">
+    <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px;">R² (로그 공간)</div>
+    <div style="font-size:22px;font-weight:500;">0.826</div>
+  </div>
+  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.9rem 1rem;">
+    <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px;">상관계수 R</div>
+    <div style="font-size:22px;font-weight:500;">0.909</div>
+  </div>
+  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.9rem 1rem;">
+    <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:4px;">p-value</div>
+    <div style="font-size:22px;font-weight:500;">&lt; 0.001</div>
+  </div>
+</div>
+
+<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.65rem 1rem;margin-bottom:1.2rem;font-size:13px;color:var(--color-text-secondary);">
+  <span style="font-weight:500;color:var(--color-text-primary);">로그 회귀식</span>&nbsp;&nbsp;log₁₀(관객수) = <strong>1.2347 × log₁₀(기대지수)</strong> + 1.5552
+</div>
+
+<div style="position:relative;width:100%;height:400px;">
+  <canvas id="mainChart" role="img" aria-label="로그 변환 회귀 산점도 (n=144). 지정 영화 16편 별 표시.">지정 영화 16편 강조 표시 포함 로그 변환 회귀 산점도</canvas>
+</div>
+
+<div style="display:flex;gap:20px;margin:10px 0 2rem;font-size:12px;color:var(--color-text-secondary);align-items:center;">
+  <span style="display:flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;border-radius:50%;background:rgba(83,74,183,0.4);border:0.8px solid #534AB7;display:inline-block;"></span>일반 영화 (128편)</span>
+  <span style="display:flex;align-items:center;gap:5px;"><span style="font-size:14px;color:#D85A30;">★</span>지정 영화 (16편)</span>
+  <span style="display:flex;align-items:center;gap:5px;"><span style="width:22px;height:2px;background:#1D9E75;display:inline-block;border-radius:1px;"></span>회귀선</span>
+</div>
+
+<div style="border-top:0.5px solid var(--color-border-tertiary);padding-top:1.5rem;margin-top:.5rem;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;gap:12px;flex-wrap:wrap;">
+    <p style="font-size:14px;font-weight:500;margin:0;color:var(--color-text-primary);">개봉주 기대지수 없어 분석 제외된 영화 <span style="font-weight:400;color:var(--color-text-secondary);font-size:13px;">41편</span></p>
+    <div style="display:flex;gap:8px;">
+      <button id="btnAll" onclick="filterTable('all')" style="font-size:12px;padding:4px 12px;">전체</button>
+      <button id="btnHasY" onclick="filterTable('hasY')" style="font-size:12px;padding:4px 12px;">관객수 있음</button>
+      <button id="btnNoY" onclick="filterTable('noY')" style="font-size:12px;padding:4px 12px;">관객수 없음</button>
+    </div>
+  </div>
+
+  <div style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);overflow:hidden;">
+    <table id="excludedTable" style="width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;">
+      <thead>
+        <tr style="background:var(--color-background-secondary);">
+          <th style="padding:8px 12px;text-align:left;font-weight:500;color:var(--color-text-secondary);width:60%;border-bottom:0.5px solid var(--color-border-tertiary);">영화명</th>
+          <th style="padding:8px 12px;text-align:right;font-weight:500;color:var(--color-text-secondary);width:40%;border-bottom:0.5px solid var(--color-border-tertiary);">최종 관객수</th>
+        </tr>
+      </thead>
+      <tbody id="excludedBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const all = [{"movie":"범죄도시4","lx":4.5999,"ly":7.0608,"hl":false},{"movie":"챌린저스","lx":2.2833,"ly":4.9483,"hl":false},{"movie":"스턴트맨","lx":2.9206,"ly":5.331,"hl":false},{"movie":"포켓몬스터: 성도지방 이야기","lx":2.5977,"ly":5.1972,"hl":false},{"movie":"혹성탈출: 새로운 시대","lx":3.5045,"ly":5.9577,"hl":false},{"movie":"그녀가 죽었다","lx":3.4555,"ly":6.0924,"hl":false},{"movie":"가필드 더 무비","lx":2.9258,"ly":5.5593,"hl":false},{"movie":"이프: 상상의 친구","lx":3.0607,"ly":5.0386,"hl":true},{"movie":"애비게일","lx":2.3464,"ly":4.1223,"hl":false},{"movie":"퓨리오사: 매드맥스 사가","lx":3.3593,"ly":6.2058,"hl":false},{"movie":"청춘 18X2 너에게로 이어지는 길","lx":3.2279,"ly":5.0498,"hl":false},{"movie":"설계자","lx":3.4486,"ly":5.7205,"hl":false},{"movie":"드림 시나리오","lx":2.3243,"ly":4.4988,"hl":false},{"movie":"창가의 토토","lx":2.5024,"ly":4.1774,"hl":false},{"movie":"나쁜 녀석들: 라이드 오어 다이","lx":2.5276,"ly":5.1535,"hl":false},{"movie":"인사이드 아웃2","lx":4.5451,"ly":6.9445,"hl":false},{"movie":"드라이브","lx":2.5539,"ly":4.8558,"hl":false},{"movie":"핸섬가이즈","lx":3.5417,"ly":6.2497,"hl":false},{"movie":"콰이어트 플레이스: 첫째 날","lx":3.1967,"ly":5.7424,"hl":true},{"movie":"탈주","lx":3.6328,"ly":6.4086,"hl":false},{"movie":"탈출: 프로젝트 사일런스","lx":3.7684,"ly":5.8386,"hl":false},{"movie":"플라이 미 투 더 문","lx":2.3201,"ly":4.6336,"hl":false},{"movie":"데드풀과 울버린","lx":3.8236,"ly":6.296,"hl":false},{"movie":"슈퍼배드 4","lx":3.6746,"ly":6.1937,"hl":false},{"movie":"리볼버","lx":3.4929,"ly":5.397,"hl":false},{"movie":"늘봄가든","lx":3.525,"ly":5.5802,"hl":false},{"movie":"필사의 추격","lx":2.8982,"ly":5.084,"hl":false},{"movie":"비틀쥬스 비틀쥬스","lx":2.9745,"ly":5.0643,"hl":false},{"movie":"베테랑2","lx":4.181,"ly":6.8765,"hl":false},{"movie":"트랜스포머 ONE","lx":2.8943,"ly":5.558,"hl":true},{"movie":"와일드 로봇","lx":2.9154,"ly":5.8347,"hl":false},{"movie":"조커: 폴리 아 되","lx":3.6793,"ly":5.7873,"hl":false},{"movie":"너의 색","lx":2.6794,"ly":4.6874,"hl":false},{"movie":"스마일2","lx":2.9004,"ly":4.7487,"hl":true},{"movie":"더러운 돈에 손대지 마라","lx":3.0821,"ly":4.9469,"hl":false},{"movie":"베놈: 라스트 댄스","lx":3.978,"ly":6.2465,"hl":false},{"movie":"아마존 활명수","lx":3.548,"ly":5.7829,"hl":false},{"movie":"롱레그스","lx":2.7243,"ly":4.6483,"hl":false},{"movie":"청설","lx":3.5041,"ly":5.9044,"hl":false},{"movie":"글래디에이터 Ⅱ","lx":3.3389,"ly":5.959,"hl":true},{"movie":"사흘","lx":3.4185,"ly":5.3021,"hl":false},{"movie":"위키드","lx":3.7042,"ly":6.3511,"hl":false},{"movie":"히든페이스","lx":3.3662,"ly":6.0064,"hl":false},{"movie":"모아나2","lx":4.0056,"ly":6.5502,"hl":false},{"movie":"소방관","lx":4.2158,"ly":6.5862,"hl":false},{"movie":"1승","lx":3.3208,"ly":5.5101,"hl":false},{"movie":"무파사: 라이온 킹","lx":3.233,"ly":5.9306,"hl":false},{"movie":"하얼빈","lx":4.0904,"ly":6.6912,"hl":false},{"movie":"시빌 워: 분열의 시대","lx":2.9206,"ly":5.056,"hl":false},{"movie":"수퍼 소닉3","lx":2.9991,"ly":5.5616,"hl":true},{"movie":"히트맨2","lx":3.6896,"ly":6.4061,"hl":false},{"movie":"캡틴 아메리카: 브레이브 뉴 월드","lx":3.4914,"ly":6.2185,"hl":false},{"movie":"퇴마록","lx":3.1278,"ly":5.6956,"hl":false},{"movie":"그 시절, 우리가 좋아했던 소녀","lx":3.0449,"ly":5.2169,"hl":false},{"movie":"백수아파트","lx":2.8675,"ly":4.6326,"hl":false},{"movie":"미키 17","lx":3.934,"ly":6.4775,"hl":false},{"movie":"백설공주","lx":2.9845,"ly":5.2715,"hl":false},{"movie":"고독한 미식가 더 무비","lx":3.4709,"ly":4.97,"hl":false},{"movie":"스트리밍","lx":2.8513,"ly":5.0187,"hl":false},{"movie":"승부","lx":3.896,"ly":6.1553,"hl":false},{"movie":"미스터 로봇","lx":2.5403,"ly":4.4447,"hl":false},{"movie":"야당","lx":3.4984,"ly":6.5287,"hl":false},{"movie":"마인크래프트 무비","lx":3.6254,"ly":6.133,"hl":false},{"movie":"썬더볼츠*","lx":3.3522,"ly":5.9649,"hl":false},{"movie":"거룩한 밤: 데몬 헌터스","lx":3.6797,"ly":5.8908,"hl":false},{"movie":"파과","lx":3.6016,"ly":5.7408,"hl":false},{"movie":"시크릿쥬쥬 마법의하모니","lx":2.0334,"ly":4.8103,"hl":false},{"movie":"바이러스","lx":2.6665,"ly":4.871,"hl":false},{"movie":"파이널 데스티네이션 블러드라인","lx":2.6444,"ly":4.9033,"hl":false},{"movie":"미션 임파서블: 파이널 레코닝","lx":3.9411,"ly":6.5305,"hl":true},{"movie":"릴로&스티치","lx":3.041,"ly":5.6858,"hl":false},{"movie":"하이파이브","lx":3.2514,"ly":6.2773,"hl":false},{"movie":"소주전쟁","lx":3.1818,"ly":5.4521,"hl":false},{"movie":"드래곤 길들이기","lx":3.5559,"ly":6.253,"hl":false},{"movie":"태양의노래","lx":2.7126,"ly":4.3217,"hl":false},{"movie":"엘리오","lx":3.0945,"ly":5.7888,"hl":false},{"movie":"28년후","lx":3.4986,"ly":5.5591,"hl":false},{"movie":"F1 더 무비","lx":3.5953,"ly":6.7171,"hl":false},{"movie":"노이즈","lx":3.2492,"ly":6.2324,"hl":false},{"movie":"쥬라기월드: 새로운시작","lx":3.8177,"ly":6.3474,"hl":false},{"movie":"슈퍼맨","lx":3.1245,"ly":5.9367,"hl":false},{"movie":"괴기열차","lx":3.0445,"ly":5.0253,"hl":false},{"movie":"킹 오브 킹스","lx":3.9597,"ly":6.1168,"hl":false},{"movie":"명탐정 코난: 척안의 잔상","lx":3.5525,"ly":5.8685,"hl":false},{"movie":"극장판 도라에몽 : 진구의 그림이야기","lx":2.7694,"ly":5.0379,"hl":false},{"movie":"메간 2.0","lx":3.0013,"ly":4.3484,"hl":false},{"movie":"전지적독자시점","lx":3.8852,"ly":6.0258,"hl":true},{"movie":"판타스틱4 : 새로운 출발","lx":3.058,"ly":5.7715,"hl":false},{"movie":"좀비딸","lx":4.0684,"ly":6.7509,"hl":false},{"movie":"배드 가이즈 2","lx":2.8176,"ly":5.602,"hl":false},{"movie":"발레리나","lx":3.1216,"ly":5.5093,"hl":false},{"movie":"스머프","lx":2.7412,"ly":5.2856,"hl":true},{"movie":"악마가 이사왔다","lx":3.5005,"ly":5.6408,"hl":false},{"movie":"극장판 귀멸의 칼날 : 무한성편","lx":4.2888,"ly":6.6813,"hl":false},{"movie":"컨저링 4: 마지막 의식","lx":3.2973,"ly":5.6137,"hl":false},{"movie":"살인자 리포트","lx":2.9978,"ly":5.5465,"hl":false},{"movie":"건국전쟁2","lx":3.313,"ly":4.9064,"hl":false},{"movie":"얼굴","lx":3.2292,"ly":6.0318,"hl":false},{"movie":"귀시","lx":2.8228,"ly":4.8355,"hl":false},{"movie":"명탐정 코난: 17년 전의 진상","lx":2.8089,"ly":4.9524,"hl":false},{"movie":"어쩔수가 없다","lx":3.9882,"ly":6.4658,"hl":false},{"movie":"극장판 체인소 맨 : 레제편","lx":3.6944,"ly":6.4487,"hl":false},{"movie":"결혼 피로연","lx":1.9085,"ly":3.8572,"hl":false},{"movie":"나쁜계집애: 달려라 하니","lx":2.798,"ly":4.8341,"hl":false},{"movie":"사람과 고기","lx":2.4624,"ly":4.4312,"hl":false},{"movie":"트론: 아레스","lx":2.9643,"ly":5.2369,"hl":false},{"movie":"웨폰","lx":2.8525,"ly":4.9152,"hl":false},{"movie":"극장판 주술회전: 회옥·옥절","lx":3.3481,"ly":5.3736,"hl":false},{"movie":"8번 출구","lx":3.1294,"ly":5.6533,"hl":false},{"movie":"세계의 주인","lx":2.3962,"ly":5.2071,"hl":false},{"movie":"빅 볼드 뷰티풀","lx":2.0253,"ly":3.9369,"hl":false},{"movie":"퍼스트라이드","lx":3.8265,"ly":5.8701,"hl":false},{"movie":"베이비걸","lx":2.3579,"ly":4.3578,"hl":false},{"movie":"하얀 차를 탄 여자","lx":2.5391,"ly":4.3095,"hl":false},{"movie":"블랙폰 2","lx":2.1847,"ly":3.9709,"hl":false},{"movie":"프레데터:죽음의 땅","lx":2.9605,"ly":5.6256,"hl":false},{"movie":"부고니아","lx":2.7348,"ly":4.863,"hl":false},{"movie":"구원자","lx":2.6684,"ly":4.5397,"hl":false},{"movie":"리그레팅 유","lx":1.699,"ly":3.0099,"hl":true},{"movie":"나우 유 씨미 3","lx":3.5827,"ly":6.1374,"hl":true},{"movie":"왼손잡이 소녀","lx":1.4914,"ly":3.9082,"hl":false},{"movie":"후계자","lx":1.3617,"ly":3.3448,"hl":false},{"movie":"위키드: 포 굿","lx":3.6638,"ly":5.9875,"hl":false},{"movie":"국보","lx":2.8293,"ly":5.3059,"hl":false},{"movie":"나혼자 프린스","lx":2.8116,"ly":4.7497,"hl":false},{"movie":"주토피아 2","lx":4.2951,"ly":6.9213,"hl":false},{"movie":"한란","lx":2.711,"ly":4.4613,"hl":false},{"movie":"더 러닝 맨","lx":2.4232,"ly":4.5893,"hl":true},{"movie":"아바타: 불과 재","lx":4.1843,"ly":6.7887,"hl":false},{"movie":"파리, 밤의 여행자들","lx":1.9395,"ly":3.6591,"hl":false},{"movie":"오늘 밤, 세계에서 이 사랑이 사라진다 해도","lx":3.4349,"ly":6.0854,"hl":false},{"movie":"극장판 장구는 못말려 : 초화려! 작열하는 떡잎마을 댄서즈","lx":3.3863,"ly":5.6627,"hl":false},{"movie":"척의 일생","lx":2.2718,"ly":4.4045,"hl":false},{"movie":"만약에 우리","lx":3.5942,"ly":6.4015,"hl":false},{"movie":"신의 악단","lx":3.839,"ly":6.0643,"hl":false},{"movie":"마이 선샤인","lx":2.3444,"ly":4.0773,"hl":false},{"movie":"스폰지밥 무비: 네모바지를 찾아서","lx":2.705,"ly":4.9371,"hl":true},{"movie":"톰과 제리: 황금나침반 대소동","lx":2.3962,"ly":4.6112,"hl":false},{"movie":"굿 포츈","lx":2.5599,"ly":4.4128,"hl":false},{"movie":"피렌체","lx":3.1364,"ly":4.3419,"hl":false},{"movie":"마이 선샤인","lx":2.3444,"ly":4.1853,"hl":false},{"movie":"스크림 7","lx":1.9138,"ly":3.4478,"hl":true},{"movie":"초속 5센티미터","lx":2.9912,"ly":4.9697,"hl":true},{"movie":"프라이메이트","lx":2.4232,"ly":4.5713,"hl":true}];
+
+const excluded = [
+  {name:'파일럿', audience:4718036},
+  {name:'보스', audience:2437329},
+  {name:'하이재킹', audience:1774150},
+  {name:'검은 수녀들', audience:1670553},
+  {name:'대도시의 사랑법', audience:879109},
+  {name:'말할 수 없는 비밀', audience:824156},
+  {name:'행복의 나라', audience:710620},
+  {name:'보통의 가족', audience:650336},
+  {name:'원더랜드', audience:625908},
+  {name:'트위스터스', audience:620240},
+  {name:'윗집 사람들', audience:549192},
+  {name:'원 배틀 애프터 어나더', audience:519713},
+  {name:'빅토리', audience:508467},
+  {name:'보고타: 마지막 기회의 땅', audience:422366},
+  {name:'극장판 주술회전: 시부야사변x사멸회유', audience:368106},
+  {name:'대가족', audience:343673},
+  {name:'안녕, 할부지', audience:264280},
+  {name:'연의 편지', audience:224289},
+  {name:'브로큰', audience:197949},
+  {name:'정보원', audience:168423},
+  {name:'침범', audience:87371},
+  {name:'한국이 싫어서', audience:62032},
+  {name:'여행과 나날', audience:58822},
+  {name:'콘크리트 마켓', audience:31962},
+  {name:'고당도', audience:5175},
+  {name:'하트맨', audience:null},
+  {name:'송 썽 블루', audience:null},
+  {name:'귀신 부르는 앱: 영', audience:null},
+  {name:'센티멘탈 밸류', audience:null},
+  {name:'만달로리안과 그로구', audience:null},
+  {name:'쇼타씨의 마지막 출장', audience:null},
+  {name:'백룸', audience:null},
+  {name:'파이널 피스', audience:null},
+  {name:'리마인더스 오브 힘', audience:null},
+  {name:'이상한 과자 가게 전천당', audience:null},
+  {name:'와일드 씽', audience:null},
+  {name:'마스터즈 오브 유니버스', audience:null},
+  {name:'상자 속의 양', audience:null},
+  {name:'디스클로저 데이', audience:null},
+  {name:'토이스토리5', audience:null},
+  {name:'빌리 아일리시 히트 미 하드 앤드 소프트: 더 투어', audience:null},
+];
+
+const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+const normalColor = isDark ? 'rgba(127,119,221,0.45)' : 'rgba(83,74,183,0.35)';
+const normalBorder = isDark ? '#7F77DD' : '#534AB7';
+const hlColor = isDark ? 'rgba(216,90,48,0.88)' : 'rgba(216,90,48,0.9)';
+const hlBorder = isDark ? '#F0997B' : '#993C1D';
+const lineColor = '#1D9E75';
+const gridColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
+const tickColor = isDark ? '#888780' : '#888780';
+const labelColor = isDark ? '#B4B2A9' : '#5F5E5A';
+
+const normalPts = all.filter(d => !d.hl).map(d => ({x:d.lx, y:d.ly, movie:d.movie}));
+const hlPts     = all.filter(d =>  d.hl).map(d => ({x:d.lx, y:d.ly, movie:d.movie}));
+const slope = 1.2347, intercept = 1.5552;
+const xMin = 1.2, xMax = 4.8;
+const regLine = [{x:xMin, y:slope*xMin+intercept},{x:xMax, y:slope*xMax+intercept}];
+
+function origLabel(lv, isY) {
+  const v = Math.pow(10, lv);
+  if(isY) return v>=1000000 ? (v/1000000).toFixed(1)+'M' : v>=1000 ? Math.round(v/1000)+'K' : Math.round(v)+'';
+  return v>=1000 ? Math.round(v/1000)+'K' : Math.round(v)+'';
+}
+
+new Chart(document.getElementById('mainChart'), {
+  data: {
+    datasets: [
+      { type:'scatter', label:'일반 영화', data:normalPts, backgroundColor:normalColor, borderColor:normalBorder, borderWidth:0.8, pointRadius:4, pointHoverRadius:6, order:3 },
+      { type:'scatter', label:'지정 영화', data:hlPts, backgroundColor:hlColor, borderColor:hlBorder, borderWidth:1.5, pointRadius:7, pointStyle:'star', pointHoverRadius:9, order:1 },
+      { type:'line', label:'회귀선', data:regLine, borderColor:lineColor, borderWidth:2, borderDash:[6,3], pointRadius:0, fill:false, order:2 }
+    ]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false,
+    plugins: {
+      legend:{ display:false },
+      tooltip:{ callbacks:{ label: ctx => {
+        if(ctx.datasetIndex<=1){ const d=ctx.raw; return [d.movie, `기대지수: ${Math.round(Math.pow(10,d.x)).toLocaleString()}`, `관객수: ${Math.round(Math.pow(10,d.y)).toLocaleString()}명`]; }
+        return null;
+      }}}
+    },
+    scales: {
+      x:{ type:'linear', min:xMin, max:xMax, title:{display:true, text:'log₁₀(개봉주 기대지수)', font:{size:12}, color:labelColor}, ticks:{color:tickColor, font:{size:11}, callback: v=>origLabel(v,false)}, grid:{color:gridColor} },
+      y:{ type:'linear', title:{display:true, text:'log₁₀(최종 관객수)', font:{size:12}, color:labelColor}, ticks:{color:tickColor, font:{size:11}, callback: v=>origLabel(v,true)}, grid:{color:gridColor} }
+    }
+  }
+});
+
+let currentFilter = 'all';
+function filterTable(f) {
+  currentFilter = f;
+  ['btnAll','btnHasY','btnNoY'].forEach(id => {
+    document.getElementById(id).style.background = 'transparent';
+    document.getElementById(id).style.color = 'var(--color-text-primary)';
+  });
+  const activeId = f==='all' ? 'btnAll' : f==='hasY' ? 'btnHasY' : 'btnNoY';
+  document.getElementById(activeId).style.background = 'var(--color-background-secondary)';
+  renderTable();
+}
+
+function renderTable() {
+  const tbody = document.getElementById('excludedBody');
+  const data = excluded.filter(d => {
+    if(currentFilter==='hasY') return d.audience !== null;
+    if(currentFilter==='noY') return d.audience === null;
+    return true;
+  });
+  tbody.innerHTML = data.map((d,i) => {
+    const bg = i%2===0 ? '' : 'background:var(--color-background-secondary);';
+    const audienceCell = d.audience !== null
+      ? `<td style="padding:7px 12px;text-align:right;color:var(--color-text-primary);">${d.audience.toLocaleString()}명</td>`
+      : `<td style="padding:7px 12px;text-align:right;"><span style="font-size:11px;padding:2px 8px;border-radius:4px;background:var(--color-background-secondary);color:var(--color-text-tertiary);">데이터 없음</span></td>`;
+    return `<tr style="${bg}border-bottom:0.5px solid var(--color-border-tertiary);">
+      <td style="padding:7px 12px;color:var(--color-text-primary);">${d.name}</td>
+      ${audienceCell}
+    </tr>`;
+  }).join('');
+}
+
+renderTable();
+filterTable('all');
+</script>
