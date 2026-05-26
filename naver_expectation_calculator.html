@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>영화 관객수 예측 계산기 (Log-Log Model)</title>
+    <style>
+        body {
+            font-family: 'Malgun Gothic', sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .calculator-card {
+            background: #ffffff;
+            max-width: 500px;
+            width: 100%;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #333;
+            margin-top: 0;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            font-size: 22px;
+        }
+        .formula {
+            background: #eef2f7;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 20px;
+            word-break: break-all;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: bold;
+            color: #444;
+            font-size: 14px;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        input:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        button {
+            width: 100%;
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        .result-box {
+            margin-top: 25px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-left: 5px solid #2ecc71;
+            border-radius: 4px;
+            display: none;
+        }
+        .result-title {
+            font-size: 15px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .result-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2ecc71;
+            margin-bottom: 15px;
+        }
+        .range-box {
+            font-size: 14px;
+            color: #7f8c8d;
+            border-top: 1px dashed #ddd;
+            padding-top: 10px;
+        }
+        .range-val {
+            font-weight: bold;
+            color: #e67e22;
+        }
+    </style>
+</head>
+<body>
+
+<div class="calculator-card">
+    <h2>🎬 흥행 관객수 예측 계산기</h2>
+    <div class="formula">
+        <strong>분석 수식:</strong><br>
+        log₁₀(관객수) = 1.2347 × log₁₀(기대지수) + 1.5552
+    </div>
+
+    <div class="input-group">
+        <label for="expectIndex">개봉 전 기대지수 입력</label>
+        <input type="number" id="expectIndex" placeholder="예: 5433" min="1" required>
+    </div>
+
+    <div class="input-group">
+        <label for="smearing">스메어링 보정 (하향 왜곡 방지)</label>
+        <select id="smearing">
+            <option value="1.08">적용 (추천 - 실제 시장 평균에 맞춤)</option>
+            <option value="1.00">미적용 (수식 그대로 단순 복원)</option>
+        </select>
+    </div>
+
+    <button onclick="calculateMetrics()">예측 관객수 계산하기</button>
+
+    <div class="result-box" id="resultBox">
+        <div class="result-title">🎯 예측 결과 (기본 체급)</div>
+        <div class="result-value" id="predValue">0 명</div>
+        
+        <div class="range-box">
+            📢 <strong>95% 비대칭 예측구간 (리스크 관리용)</strong><br>
+            • 최악의 경우 (하한선): <span class="range-val" id="lowValue">0 명</span><br>
+            • 입소문 대박 (상한선): <span class="range-val" id="highValue">0 명</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    function calculateMetrics() {
+        const idx = parseFloat(document.getElementById('expectIndex').value);
+        if (!idx || idx <= 0) {
+            alert('올바른 기대지수를 입력해주세요.');
+            return;
+        }
+
+        // 1. 로그 변환 후 수식 대입
+        const logIdx = Math.log10(idx);
+        const logPred = (1.2347 * logIdx) + 1.5552;
+
+        // 2. 자연수 복원
+        let rawAudience = Math.pow(10, logPred);
+
+        // 3. 스메어링 보정값 적용 (선택)
+        const smearingFactor = parseFloat(document.getElementById('smearing').value);
+        let finalAudience = rawAudience * smearingFactor;
+
+        // 4. 95% 예측구간 계산 (R²=0.826 모델의 통상적 오차인 오차승수 약 1.35배 적용)
+        // 로그 단위 오차 약 0.13을 기준으로 상하 비대칭 구간 설정
+        let lowerAudience = rawAudience / 1.35;
+        let upperAudience = rawAudience * 1.35 * (smearingFactor > 1 ? 1.05 : 1);
+
+        // 결과 화면에 반영 (세 자리마다 콤마 추가)
+        document.getElementById('predValue').innerText = Math.round(finalAudience).toLocaleString() + ' 명';
+        document.getElementById('lowValue').innerText = Math.round(lowerAudience).toLocaleString() + ' 명';
+        document.getElementById('highValue').innerText = Math.round(upperAudience).toLocaleString() + ' 명';
+
+        // 결과 박스 노출
+        document.getElementById('resultBox').style.display = 'block';
+    }
+</script>
+
+</body>
+</html>
