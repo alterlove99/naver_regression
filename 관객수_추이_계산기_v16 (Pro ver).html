@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>개봉 관객수 예측기 v15 Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+/* 전반적인 디자인 시스템 개선: 모던 프리미엄 UI */
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans KR',sans-serif;background:#f8fafc;color:#0f172a;line-height:1.6;padding:0 0 60px;}
+
+.header{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);color:#fff;padding:32px 24px;position:relative;overflow:hidden;border-bottom:1px solid #e2e8f0;}
+.header-tag{font-size:11px;color:#3b82f6;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;font-weight:700;}
+.header h1{font-size:clamp(20px,5vw,26px);font-weight:700;letter-spacing:-.02em;}
+.header h1 span{color:#60a5fa;}
+.header-sub{font-size:12px;color:#94a3b8;margin-top:6px;font-weight:300;}
+
+.wrap{max-width:768px;margin:0 auto;padding:20px 16px 0;}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.02),0 1px 2px rgba(0,0,0,0.03);}
+.card-title{font-size:13px;font-weight:600;color:#1e293b;margin-bottom:14px;display:flex;align-items:center;}
+.card-title span{font-size:11px;font-weight:400;color:#94a3b8;margin-left:auto;}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+label.fl{font-size:12px;color:#64748b;display:block;margin-bottom:6px;font-weight:500;}
+input[type=number],select{width:100%;padding:9px 12px;font-size:13px;background:#fff;border:1px solid #cbd5e1;border-radius:8px;color:#0f172a;transition:border-color .15s;outline:none;}
+input[type=number]:focus,select:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,0.1);}
+
+.day-row{display:flex;gap:4px;}
+.day-btn{flex:1;padding:6px 0;font-size:12px;font-weight:500;border-radius:6px;border:1px solid #e2e8f0;background:#fff;color:#64748b;cursor:pointer;transition:all .15s;text-align:center;}
+.day-btn.on{background:#ffedd5;color:#9a3412;border-color:#fed7aa;font-weight:600;}
+
+.card-row{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.card-row:last-child{margin-bottom:0;}
+.row-label{font-size:12px;color:#475569;width:70px;flex-shrink:0;font-weight:600;}
+.toggle-btn{font-size:12px;padding:7px 16px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;color:#64748b;cursor:pointer;transition:all .15s;}
+.toggle-btn.on-culture{background:#f3e8ff;color:#6b21a8;border-color:#d8b4fe;font-weight:600;}
+.toggle-btn.on-ani{background:#dcfce7;color:#166534;border-color:#bbf7d0;font-weight:600;}
+
+.btn-start{width:100%;padding:14px;font-size:14px;font-weight:700;background:#0f172a;color:#fff;border:none;border-radius:8px;cursor:pointer;margin-bottom:20px;box-shadow:0 4px 6px -1px rgba(15,23,42,0.15);transition:background .15s;}
+.btn-start:hover{background:#1e293b;}
+
+.anote{font-size:12px;color:#1e40af;padding:12px 16px;background:#eff6ff;border:1px dashed #bfdbfe;border-radius:8px;margin-bottom:14px;line-height:1.6;}
+.occ-note{font-size:12px;color:#15803d;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 16px;margin-bottom:14px;line-height:1.6;display:none;}
+
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+.metric{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px;text-align:center;}
+.metric .lbl{font-size:11px;color:#64748b;margin-bottom:4px;font-weight:500;}
+.metric .val{font-size:14px;font-weight:700;color:#0f172a;}
+.metric .sub{font-size:10px;color:#94a3b8;margin-top:2px;}
+
+.final-card{background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid #3b82f6;border-radius:10px;padding:16px;margin-bottom:16px;}
+.final-card .lbl{font-size:11px;color:#1e40af;margin-bottom:4px;font-weight:600;}
+.final-card .val{font-size:22px;font-weight:800;color:#1e3a8a;}
+.final-card .range{font-size:12px;color:#475569;margin-top:4px;font-weight:500;}
+.final-card .minfo{font-size:11px;color:#64748b;margin-top:6px;line-height:1.5;}
+
+.chart-wrap{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:16px;}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:#64748b;margin-bottom:12px;}
+.legend span{display:flex;align-items:center;gap:4px;}
+.ldot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+
+.table-header-area {display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; padding:0 4px;}
+.table-header-title {font-size:13px; font-weight:600; color:#1e293b;}
+.btn-excel {font-size:11px; font-weight:600; background:#16a34a; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; display:flex; align-items:center; gap:4px; transition:background 0.15s;}
+.btn-excel:hover {background:#15803d;}
+
+.table-wrap{width:100%;overflow-x:auto;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:14px;background:#fff;}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:680px;}
+thead tr{background:#f1f5f9;}
+th{font-size:11px;color:#475569;font-weight:600;padding:10px 8px;text-align:right;border-bottom:1px solid #e2e8f0;white-space:nowrap;}
+th:first-child{text-align:left;padding-left:12px;}
+td{padding:8px;border-bottom:1px solid #f1f5f9;text-align:right;vertical-align:middle;color:#0f172a;}
+td:first-child{text-align:left;font-weight:600;color:#334155;padding-left:12px;}
+tbody tr:last-child td{border-bottom:none;}
+tr.w2 td{border-top:2px solid #cbd5e1;}
+tr.w3 td{border-top:2px dashed #cbd5e1;}
+tr.hrow td{background:rgba(254,215,170,0.15);}
+tr.prow td{color:#94a3b8;}
+
+.hcell{color:#c2410c;font-weight:600;font-size:11px;}
+.ccell{color:#7e22ce;font-weight:600;font-size:11px;}
+.pos{color:#16a34a;font-weight:600;}.neg{color:#94a3b8;}
+.bw{display:inline-block;font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;background:#f1f5f9;color:#64748b;}
+.bw.w1{background:rgba(59,130,246,0.1);color:#2563eb;}
+
+/* 인풋 필드 세련된 스타일링 */
+.ai, .oi{width:84px;font-size:12px;padding:5px 8px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;color:#0f172a;text-align:right;outline:none;}
+.ai:focus, .oi:focus{border-color:#3b82f6;}
+.ai.filled{border-color:#16a34a;background:#f0fdf4;color:#166534;font-weight:bold;}
+.oi.filled{border-color:#3b82f6;background:#eff6ff;color:#1d4ed8;font-weight:bold;}
+
+.ext-btn{width:100%;padding:12px;font-size:13px;font-weight:600;margin-bottom:16px;border-radius:8px;border:1px dashed #3b82f6;background:#f0f9ff;color:#2563eb;cursor:pointer;transition:all 0.2s;}
+.ext-btn:hover{background:#e0f2fe;}
+.foot-note{font-size:11px;color:#94a3b8;text-align:left;padding:0 4px;margin-top:14px;line-height:1.7;}
+
+@media(max-width:480px){
+  .form-grid{grid-template-columns:1fr;}
+  .metrics{gap:6px;}
+  .metric{padding:10px;}
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-tag">Box Office Forecaster v15</div>
+  <h1>개봉 관객수 <span>예측기 Pro</span></h1>
+  <div class="header-sub">혼합효과 모델(Mf) + Kalman Filter · 2022~2026년 국내 개봉작 349편 통계 기반</div>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <div class="card-title">🎬 기본 정보 및 장르 환경</div>
+    <div class="form-grid" style="margin-bottom:14px;">
+      <div><label class="fl">개봉일 관객수</label><input type="number" id="base-aud" min="1" placeholder="예: 218266"></div>
+      <div><label class="fl">개봉 요일</label>
+        <select id="open-day">
+          <option value="0">월요일</option><option value="1">화요일</option>
+          <option value="2" selected>수요일</option><option value="3">목요일</option>
+          <option value="4">금요일</option><option value="5">토요일</option><option value="6">일요일</option>
+        </select>
+      </div>
+    </div>
+    <div class="card-row" style="margin-bottom:0;">
+      <span class="row-label">장르 특성</span>
+      <button class="toggle-btn" id="ani-btn" onclick="toggleAni(this)">일반 영화</button>
+      <span style="font-size:11px;color:#94a3b8;margin-left:4px;">애니메이션 장르일 경우 활성화</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📅 1주차 특수일 환경 <span>공휴일 지정 / 문화의날 여부</span></div>
+    <div class="card-row">
+      <span class="row-label">🟠 공휴일</span>
+      <div class="day-row" style="flex:1;">
+        <button class="day-btn" data-week="1" data-di="0">월</button><button class="day-btn" data-week="1" data-di="1">화</button>
+        <button class="day-btn" data-week="1" data-di="2">수</button><button class="day-btn" data-week="1" data-di="3">목</button>
+        <button class="day-btn" data-week="1" data-di="4">금</button><button class="day-btn" data-week="1" data-di="5">토</button>
+        <button class="day-btn" data-week="1" data-di="6">일</button>
+      </div>
+    </div>
+    <div class="card-row"><span class="row-label">🟣 문화의날</span><button class="toggle-btn" id="cult-1" onclick="toggleCulture(this)">없음</button></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📅 2주차 특수일 환경 <span>공휴일 지정 / 문화의날 여부</span></div>
+    <div class="card-row">
+      <span class="row-label">🟠 공휴일</span>
+      <div class="day-row" style="flex:1;">
+        <button class="day-btn" data-week="2" data-di="0">월</button><button class="day-btn" data-week="2" data-di="1">화</button>
+        <button class="day-btn" data-week="2" data-di="2">수</button><button class="day-btn" data-week="2" data-di="3">목</button>
+        <button class="day-btn" data-week="2" data-di="4">금</button><button class="day-btn" data-week="2" data-di="5">토</button>
+        <button class="day-btn" data-week="2" data-di="6">일</button>
+      </div>
+    </div>
+    <div class="card-row"><span class="row-label">🟣 문화의날</span><button class="toggle-btn" id="cult-2" onclick="toggleCulture(this)">없음</button></div>
+  </div>
+
+  <button class="btn-start" onclick="initCalc()">예측 매트릭스 가동 →</button>
+
+  <div id="result-area" style="display:none;">
+    <div id="anote" class="anote"></div>
+    <div id="occ-note" class="occ-note"></div>
+
+    <div class="metrics">
+      <div class="metric"><div class="lbl">1주차 실적합계</div><div class="val" id="sum1">—</div></div>
+      <div class="metric"><div class="lbl">2주차 실적합계</div><div class="val" id="sum2">—</div><div class="sub" id="sum2r"></div></div>
+      <div class="metric"><div class="lbl">2주 누적 스코어</div><div class="val" id="sumT">—</div></div>
+    </div>
+    <div id="metrics4" style="display:none;" class="metrics">
+      <div class="metric"><div class="lbl">3주차 실적합계</div><div class="val" id="sum3">—</div></div>
+      <div class="metric"><div class="lbl">4주차 실적합계</div><div class="val" id="sum4">—</div></div>
+      <div class="metric"><div class="lbl">4주 누적 스코어</div><div class="val" id="sum4T">—</div></div>
+    </div>
+
+    <div class="final-card">
+      <div class="lbl">🍿 최종 관객수 예측 결과 (시뮬레이션 모델)</div>
+      <div class="val" id="final-pred">—</div>
+      <div class="range" id="final-range"></div>
+      <div class="minfo" id="minfo"></div>
+    </div>
+
+    <div class="chart-wrap">
+      <div class="legend" style="margin-bottom:14px;">
+        <span><span class="ldot" style="background:#4f8ef7"></span>예측 관객수 (시뮬레이션)</span>
+        <span><span class="ldot" style="background:#16a34a"></span>실제 관객수 (입력 데이터)</span>
+      </div>
+      <div style="position:relative;height:240px;"><canvas id="chart"></canvas></div>
+    </div>
+
+    <div class="table-header-area">
+      <div class="table-header-title">📊 시뮬레이션 상세 분석 데이터 테이블</div>
+      <button class="btn-excel" onclick="downloadExcel()">🟢 Excel 다운로드</button>
+    </div>
+
+    <div class="table-wrap">
+      <table id="target-table">
+        <thead><tr>
+          <th>일차</th><th>요일</th><th>주차</th><th>특수 환경</th>
+          <th style="text-align:center; width:110px;">실제 관객수</th>
+          <th style="text-align:center; width:110px;">좌석점유율 %</th>
+          <th>보정 예측치</th><th>전일 대비</th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+    <button class="ext-btn" id="ext-btn" onclick="extend4w()">+ 3·4주차 예측 연장 관리창 열기</button>
+
+    <p class="foot-note">
+      ※ Mf 모델 (주차+요일+공휴일+문화의날+애니×주차·토·일 복합 결합) + Kalman Filter (Q=0.1643, R=0.1804)<br>
+      좌석점유율 2일 이상 입력 시 1주차 일간변화율 자동 분석 → 2주차 모델 감소율 정밀 보정 (β=2.766) 적용<br>
+      최종관객수(2주 수식): exp(−0.445 + 1.226·log(2w) − 0.204·log(개봉일)) · MAPE 28.2%<br>
+      최종관객수(4주 수식): exp(+0.091 + 1.093·log(4w) − 0.112·log(개봉일)) · MAPE 14.2% 안정화 모듈
+    </p>
+  </div>
+</div>
+
+<script>
+// ── Mdf_2주 계수
+const C2=-0.744,CD=[0,-0.029,0.473,0.281,0.505,1.128,1.020],CH=0.967,CC=0.166;
+const C_ANI=-0.377,C_ANI2W=0.093,C_ANI토=0.313,C_ANI일=0.334;
+const C_DAILY2W=2.766; 
+
+// ── Mdf_4주 계수
+const C2_4=-0.532,C3_4=-1.183,C4_4=-1.984;
+const CD4=[0,-0.036,0.336,0.215,0.468,1.134,1.026],CH4=0.918,CC4=0.206;
+const C_ANI4=-0.560,C_ANI2W4=-0.009,C_ANI3W4=0.147,C_ANI4W4=0.418;
+const C_ANI토4=0.214,C_ANI일4=0.242;
+
+// ── Kalman
+const Q_KF=0.1643,R_KF=0.1804;
+
+// ── 최종관객수 회귀
+const F2_INT=-0.445,F2_2W=1.226,F2_OP=-0.204;
+const F4_INT=0.0912,F4_4W=1.0928,F4_OP=-0.1124;
+
+const DN=['월','화','수','목','금','토','일'];
+let CI=null,ST={},IS_EXT=false;
+
+document.querySelectorAll('.day-btn').forEach(b=>b.addEventListener('click',()=>b.classList.toggle('on')));
+function toggleAni(btn){btn.classList.toggle('on-ani');btn.textContent=btn.classList.contains('on-ani')?'애니메이션 가중치':'일반 영화';}
+function toggleCulture(btn){btn.classList.toggle('on-culture');btn.textContent=btn.classList.contains('on-culture')?'지정됨 (수요일)':'없음';}
+function getHolSet(w){const s=new Set();document.querySelectorAll(`.day-btn[data-week="${w}"].on`).forEach(b=>s.add(parseInt(b.dataset.di)));return s;}
+
+function cf2w(di,idx,h,c,ani,dailyChg){
+  const wk=Math.floor(idx/7)+1;
+  let v=CD[di]+(h?CH:0)+(c?CC:0);
+  if(wk>=2){
+    v+=C2;
+    v+=C_DAILY2W*dailyChg; 
+  }
+  if(ani){v+=C_ANI;if(wk>=2)v+=C_ANI2W;if(di===5)v+=C_ANI토;if(di===6)v+=C_ANI일;}
+  return v;
+}
+function cf4w(di,idx,h,c,ani){
+  const wk=Math.floor(idx/7)+1;
+  let v=CD4[di]+(h?CH4:0)+(c?CC4:0);
+  if(wk===2)v+=C2_4;else if(wk===3)v+=C3_4;else if(wk===4)v+=C4_4;
+  if(ani){
+    v+=C_ANI4;
+    if(wk===2)v+=C_ANI2W4;else if(wk===3)v+=C_ANI3W4;else if(wk===4)v+=C_ANI4W4;
+    if(di===5)v+=C_ANI토4;if(di===6)v+=C_ANI일4;
+  }
+  return v;
+}
+
+function computeDailyChg(occs){
+  const vals=[];
+  for(let i=1;i<7;i++){
+    if(occs[i-1]!==null&&occs[i]!==null&&occs[i-1]>0)
+      vals.push((occs[i]-occs[i-1])/occs[i-1]);
+  }
+  return vals.length>=1 ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
+}
+
+function fmtMan(n){
+  if(n>=10000000)return(n/10000000).toFixed(1)+'천만';
+  if(n>=1000000)return(n/10000).toFixed(0)+'만';
+  if(n>=10000)return(n/10000).toFixed(1)+'만';
+  return Math.round(n).toLocaleString();
+}
+
+function render(){
+  const{days,hols,cults,actuals,occs,alpha0,baseAud,isAni}=ST;
+  const allDays=[...days,...(IS_EXT?ST.days4:[])];
+  const allHols=[...hols,...(IS_EXT?ST.hols4:[])];
+  const allCults=[...cults,...(IS_EXT?ST.cults4:[])];
+  const allActs=[...actuals,...(IS_EXT?ST.acts4:[])];
+
+  const dailyChg=computeDailyChg(occs);
+  const filledOcc=occs.slice(0,7).filter(v=>v!==null&&v>0).length;
+  const hasOcc=filledOcc>=2;
+
+  const occEl=document.getElementById('occ-note');
+  if(hasOcc){
+    const adj2w=(Math.exp(C2+C_DAILY2W*dailyChg)-1)*100;
+    occEl.style.display='block';
+    occEl.innerHTML=`📊 <b>좌석점유율 모듈 가동</b> — 1주차 일간변화율: <b>${(dailyChg*100).toFixed(1)}%</b> 분석 완료 → 2주차 기초 감소율 보정치: <b>${adj2w.toFixed(1)}%</b>`;
+  } else {
+    occEl.style.display='none';
+  }
+
+  const nA=allActs.filter(v=>v!==null).length;
+
+  let a=alpha0,P=Q_KF;
+  const kf=allDays.map((di,i)=>{
+    P+=Q_KF;
+    const cfVal=i<14?cf2w(di,i,allHols[i],allCults[i],isAni,dailyChg):cf4w(di,i,allHols[i],allCults[i],isAni);
+    if(allActs[i]!==null&&allActs[i]>0){
+      const obs=Math.log1p(allActs[i])-cfVal;
+      const K=P/(P+R_KF);a+=K*(obs-a);P=(1-K)*P;
+    }
+    return{alpha:a,K:P/(P+R_KF)};
+  });
+
+  document.getElementById('anote').innerHTML=nA<=1
+    ?`📈 <b>α 마켓 초깃값 연동 완료</b>: 2일차 실적 데이터 입력 시 칼만 필터가 상시 보정 연동을 시작합니다.`
+    :`🔄 <b>Kalman Filter 통합 분석 중</b> — 실제 시장 실적치 <b>${nA}개</b> 동기화 · 제어 계수(KG): ${kf[Math.max(0,nA-1)].K.toFixed(3)}`;
+
+  const preds=allDays.map((di,i)=>{
+    const cfVal=i<14?cf2w(di,i,allHols[i],allCults[i],isAni,dailyChg):cf4w(di,i,allHols[i],allCults[i],isAni);
+    return{di,name:DN[di],week:Math.floor(i/7)+1,isHol:allHols[i],isCul:allCults[i],
+      actual:allActs[i],pred:Math.round(Math.expm1(kf[i].alpha+cfVal))};
+  });
+
+  ST.currentPreds = preds;
+
+  const vals=preds.map(p=>p.actual!==null?p.actual:p.pred);
+  const s1=vals.slice(0,7).reduce((a,b)=>a+b, 0);
+  const s2=vals.slice(7,14).reduce((a,b)=>a+b, 0);
+  document.getElementById('sum1').textContent=s1.toLocaleString()+'명';
+  document.getElementById('sum2').textContent=s2.toLocaleString()+'명';
+  document.getElementById('sum2r').textContent='1주 대비 '+(s2/s1*100).toFixed(1)+'%';
+  document.getElementById('sumT').textContent=(s1+s2).toLocaleString()+'명';
+
+  let fp,fmape,fmodel;
+  if(IS_EXT&&vals.length>=28){
+    const tw4=vals.slice(0,28).reduce((a,b)=>a+b,0);
+    const s3=vals.slice(14,21).reduce((a,b)=>a+b,0);
+    const s4=vals.slice(21,28).reduce((a,b)=>a+b,0);
+    document.getElementById('sum3').textContent=s3.toLocaleString()+'명';
+    document.getElementById('sum4').textContent=s4.toLocaleString()+'명';
+    document.getElementById('sum4T').textContent=tw4.toLocaleString()+'명';
+    document.getElementById('metrics4').style.display='grid';
+    fp=Math.exp(F4_INT+F4_4W*Math.log(tw4)+F4_OP*Math.log(baseAud));
+    fmape=14.2;fmodel='4주 고도화 회귀 분석 · MAPE 14.2%';
+  } else {
+    const tw2=s1+s2;
+    fp=Math.exp(F2_INT+F2_2W*Math.log(tw2)+F2_OP*Math.log(baseAud));
+    fmape=28.2;fmodel='2주 기준 추정 회귀 · MAPE 28.2%';
+  }
+  document.getElementById('final-pred').textContent=fmtMan(Math.round(fp))+'명 추정';
+  document.getElementById('final-range').textContent=`예측 신뢰 구간 (±${fmape}%): ${fmtMan(Math.round(fp*(1-fmape/100)))} ~ ${fmtMan(Math.round(fp*(1+fmape/100)))}명`;
+  document.getElementById('minfo').innerHTML=`OLS 로그-로그 정밀 계산 모듈 · 개봉 후 <b>${nA}일차</b> 시점 지표 실시간 추적 중 · ${fmodel}`;
+
+  const tbody=document.getElementById('tbody');
+  tbody.innerHTML='';
+  preds.forEach((p,i)=>{
+    const dv=p.actual!==null?p.actual:p.pred;
+    const pv=i>0?(preds[i-1].actual!==null?preds[i-1].actual:preds[i-1].pred) : null;
+    const chg=pv!==null?(dv-pv)/pv*100:null;
+    const isA=p.actual!==null;
+    const tr=document.createElement('tr');
+    if(i===7)tr.classList.add('w2');
+    if(i===14)tr.classList.add('w3');
+    if(p.isHol)tr.classList.add('hrow');
+    if(!isA)tr.classList.add('prow');
+    
+    let sp='';
+    if(p.isHol&&p.isCul)sp='<span class="hcell">★공휴</span> <span class="ccell">🎭문화</span>';
+    else if(p.isHol)sp='<span class="hcell">★ 공휴일</span>';
+    else if(p.isCul)sp='<span class="ccell">🎭 문화의날</span>';
+
+    const occV=i<14&&occs[i]!==null?(occs[i]*100).toFixed(0):'';
+    const occCell=i<14
+      ?`<input class="oi${occV!==''?' filled':''}" type="number" min="0" max="100" step="1" placeholder="—" value="${occV}" data-idx="${i}" onchange="onOcc(this)">`
+      :`<span style="color:#cbd5e1">—</span>`;
+
+    const actCell=IS_EXT&&i>=14
+      ?`<input class="ai${isA?' filled':''}" type="number" min="0" placeholder="—" value="${isA?p.actual:''}" data-idx="${i}" data-ext="1" onchange="onInput(this)">`
+      :(i<14?`<input class="ai${isA?' filled':''}" type="number" min="0" placeholder="—" value="${isA?p.actual:''}" data-idx="${i}" onchange="onInput(this)">`:'-');
+
+    tr.innerHTML=`
+      <td style="color:#64748b; font-weight:500;">${i+1}일차</td>
+      <td style="font-weight:600">${p.name}요일</td>
+      <td><span class="bw${p.week===1?' w1':''}">${p.week}주차</span></td>
+      <td>${sp}</td>
+      <td style="text-align:center;">${actCell}</td>
+      <td style="text-align:center;">${occCell}</td>
+      <td style="font-weight:600; opacity:${isA?'.3':'1'}">${p.pred.toLocaleString()}명</td>
+      <td class="${chg===null?'':chg>=0?'pos':'neg'}">${chg===null?'—':(chg>=0?'+':'')+chg.toFixed(1)+'%'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // ── [차트 대수선] 나란히 비교하는 바 차트 구조 설계
+  const ff=getComputedStyle(document.body).fontFamily||'sans-serif';
+  Chart.defaults.font.family=ff;
+  
+  // 조건별 가독성을 위한 단일 고정 소프트 톤 컬러 구성 (공휴일/문화의날은 테이블에서 주로 식별하므로 차트 밸런스 유지)
+  const bgPredColors = preds.map(p => p.isHol ? '#fda4af' : p.isCul ? '#d8b4fe' : '#93c5fd'); 
+  const bgActColors = preds.map(() => '#22c55e');
+
+  if(CI)CI.destroy();
+  CI=new Chart(document.getElementById('chart'),{
+    type:'bar',
+    data:{
+      labels:preds.map((p,i)=>`${i+1}(${p.name})`),
+      datasets:[
+        {
+          label:'모델 예측치',
+          data:preds.map(p=>p.pred),
+          backgroundColor:bgPredColors,
+          borderRadius:4,
+          borderWidth:0,
+          grouped: true // ◀ 나란히 배치 핵심 옵션
+        },
+        {
+          label:'실제 실적치',
+          data:preds.map(p=>p.actual),
+          backgroundColor:bgActColors,
+          borderRadius:4,
+          borderWidth:0,
+          grouped: true // ◀ 나란히 배치 핵심 옵션
+        }
+      ]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'rgba(15, 23, 42, 0.9)',
+          padding:10,
+          titleFont:{family:ff,size:11},
+          bodyFont:{family:ff,size:11},
+          callbacks:{
+            label:ctx=>{
+              const p=preds[ctx.dataIndex];
+              if(ctx.datasetIndex===0) return ` 보정 예측: ${p.pred.toLocaleString()}명`;
+              if(ctx.datasetIndex===1) return p.actual !== null ? ` 실제 실적: ${p.actual.toLocaleString()}명` : ' 실제 실적: 미입력';
+              return '';
+            }
+          }
+        }
+      },
+      scales:{
+        x:{
+          ticks:{font:{family:ff,size:10},color:'#64748b',maxRotation:45,autoSkip:false},
+          grid:{display:false},
+          border:{display:false}
+        },
+        y:{
+          ticks:{font:{family:ff,size:11},color:'#64748b',callback:v=>v>=10000?(v/10000).toFixed(0)+'만':v.toLocaleString()},
+          grid:{color:'#f1f5f9'},
+          border:{display:false}
+        }
+      }
+    }
+  });
+}
+
+function onInput(el){
+  const idx=parseInt(el.dataset.idx);
+  const val=el.value===''?null:Math.max(0,parseInt(el.value)||0);
+  if(el.dataset.ext==='1')ST.acts4[idx-14]=val;
+  else ST.actuals[idx]=val;
+  el.classList.toggle('filled',val!==null);
+  render();
+}
+
+function onOcc(el){
+  const idx=parseInt(el.dataset.idx);
+  const val=el.value===''?null:Math.min(100,Math.max(0,parseFloat(el.value)))/100;
+  ST.occs[idx]=val;
+  el.classList.toggle('filled',val!==null);
+  render();
+}
+
+function downloadExcel() {
+  if (!ST.currentPreds || ST.currentPreds.length === 0) return;
+  
+  let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">`;
+  html += `<head><meta charset="utf-8"></head><body>`;
+  html += `<table border="1">`;
+  html += `<tr style="background-color:#f1f5f9; font-weight:bold;">
+    <th>일차</th><th>요일</th><th>주차</th><th>특수 환경</th><th>실제 관객수</th><th>좌석점유율 %</th><th>보정 예측치</th><th>전일 대비</th>
+  </tr>`;
+  
+  ST.currentPreds.forEach((p, i) => {
+    let envText = '';
+    if (p.isHol && p.isCul) envText = '공휴일, 문화의날';
+    else if (p.isHol) envText = '공휴일';
+    else if (p.isCul) envText = '문화의날';
+    else envText = '일반일';
+
+    const actVal = p.actual !== null ? p.actual : '';
+    const occVal = i < 14 && ST.occs[i] !== null ? (ST.occs[i] * 100).toFixed(0) + '%' : '';
+    
+    const dv = p.actual !== null ? p.actual : p.pred;
+    const pv = i > 0 ? (ST.currentPreds[i - 1].actual !== null ? ST.currentPreds[i - 1].actual : ST.currentPreds[i - 1].pred) : null;
+    const chgText = pv !== null ? ((dv - pv) / pv * 100).toFixed(1) + '%' : '—';
+
+    html += `<tr>
+      <td>${i + 1}일차</td>
+      <td>${p.name}요일</td>
+      <td>${p.week}주차</td>
+      <td>${envText}</td>
+      <td style="text-align:right;">${actVal ? Number(actVal).toLocaleString() : ''}</td>
+      <td style="text-align:right;">${occVal}</td>
+      <td style="text-align:right;">${Number(p.pred).toLocaleString()}</td>
+      <td style="text-align:right;">${chgText}</td>
+    </tr>`;
+  });
+  
+  html += `</table></body></html>`;
+
+  const blob = new Blob(['\ufeff' + html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  
+  const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  a.href = url;
+  a.download = `영화_관객수_예측_리포트_${today}.xls`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function extend4w(){
+  IS_EXT=true;
+  document.getElementById('ext-btn').style.display='none';
+  const openDi=ST.days[0];
+  ST.days4=Array.from({length:14},(_,i)=>(openDi+14+i)%7);
+  ST.hols4=Array(14).fill(false);
+  ST.cults4=Array(14).fill(false);
+  ST.acts4=Array(14).fill(null);
+  render();
+}
+
+function initCalc(){
+  const base=parseFloat(document.getElementById('base-aud').value);
+  const openDi=parseInt(document.getElementById('open-day').value);
+  if(!base||base <= 0){alert('개봉일 관객수를 정확히 입력해주세요.');return;}
+  const isAni=document.getElementById('ani-btn').classList.contains('on-ani');
+  const h1=getHolSet(1),h2=getHolSet(2);
+  const c1=document.getElementById('cult-1').classList.contains('on-culture');
+  const c2=document.getElementById('cult-2').classList.contains('on-culture');
+  const days=Array.from({length:14},(_,i)=>(openDi+i)%7);
+  const hols=days.map((di,i)=>i<7?h1.has(di):h2.has(di));
+  const cults=days.map((di,i)=>di===2&&(i<7?c1:c2));
+  const occs=Array(14).fill(null);
+  const alpha0=Math.log1p(base)-cf2w(openDi,0,hols[0],cults[0],isAni,0);
+  IS_EXT=false;
+  ST={days,hols,cults,actuals:Array(14).fill(null),occs,alpha0,baseAud:base,isAni};
+  ST.actuals[0]=base;
+  document.getElementById('result-area').style.display='block';
+  document.getElementById('ext-btn').style.display='block';
+  document.getElementById('metrics4').style.display='none';
+  document.getElementById('result-area').scrollIntoView({behavior:'smooth',block:'start'});
+  render();
+}
+</script>
+</body>
+</html>
