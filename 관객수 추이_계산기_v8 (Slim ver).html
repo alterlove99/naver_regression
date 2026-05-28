@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>영화 2주간 관객수 추이 예측 계산기 Pro</title>
+  <h2 class="sr-only">개봉일 관객수, 요일, 주차별 공휴일 및 문화의날을 입력하면 2주간 예측 관객수 및 최종 스코어를 보여주는 계산기</h2>
+  
+  <style>
+    /* CSS 변수 설정 (세련된 고급 테마 및 식별 컬러 매칭) */
+    :root {
+      --color-primary: #378add;
+      --color-primary-hover: #2563eb;
+      --color-accent-hol: #EF9F27;
+      --color-accent-hol-text: #412402;
+      --color-accent-cult: #7C3AED;
+      --color-accent-ani: #2e9e6b;
+      --color-bg-main: #f8fafc;
+      --color-bg-card: #ffffff;
+      --color-text-main: #0f172a;
+      --color-text-sub: #64748b;
+      --color-border: #e2e8f0;
+      --radius-lg: 16px;
+      --radius-md: 10px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    
+    /* 화면 정중앙 배치를 위한 body 스타일 */
+    body { 
+      background-color: var(--color-bg-main); 
+      color: var(--color-text-main); 
+      padding: 20px; 
+      line-height: 1.5; 
+      min-height: 100vh;
+      display: flex;
+      justify-content: center; 
+      align-items: center;     
+    }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0; }
+
+    /* 메인 정렬 컨테이너: 결과 노출 전 단독 배치 / 노출 후 가로 확장 */
+    .app-container { 
+      width: 100%;
+      max-width: 380px; 
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* 카드 패널 공통 디자인 */
+    .section-card { 
+      width: 100%;
+      background: var(--color-bg-card); 
+      border-radius: var(--radius-lg); 
+      padding: 24px; 
+      border: 1px solid var(--color-border); 
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+    }
+    .section-title { font-size: 14px; font-weight: 600; color: var(--color-text-main); margin-bottom: 14px; }
+    .section-title span { font-size: 11px; font-weight: 400; color: var(--color-text-sub); margin-left: 6px; }
+    
+    /* 좌측 입력 폼 사이드 고정 폭 */
+    .form-side { width: 100%; max-width: 380px; }
+    .card-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .card-row:last-child { margin-bottom: 0; }
+    
+    /* "문화의 날"이 줄바꿈되지 않도록 너비를 조절하고 강제 고정 */
+    .row-label { font-size: 12px; font-weight: 600; color: var(--color-text-sub); width: 68px; flex-shrink: 0; white-space: nowrap; }
+
+    /* 인풋 및 컨트롤 서식 */
+    label { font-size: 13px; font-weight: 500; color: var(--color-text-sub); display: block; margin-bottom: 6px; }
+    input[type="number"], select { width: 100%; padding: 10px 12px; border-radius: var(--radius-md); border: 1px solid var(--color-border); font-size: 14px; color: var(--color-text-main); outline: none; transition: border-color 0.2s; background-color: #fff; }
+    input[type="number"]:focus, select:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(55, 138, 221, 0.15); }
+
+    /* 요일 공휴일 버튼 세트 */
+    .day-btn { font-size: 12px; padding: 6px 0; border-radius: var(--radius-md); border: 1px solid var(--color-border); background: #fff; color: var(--color-text-sub); cursor: pointer; flex: 1; transition: all 0.2s; }
+    .day-btn:hover { background: #f1f5f9; }
+    .day-btn.on-hol { background: var(--color-accent-hol); color: var(--color-accent-hol-text); border-color: #BA7517; font-weight: 600; }
+
+    /* 토글형 특수 타겟 버튼 세트 */
+    .toggle-btn { font-size: 12px; padding: 6px 16px; border-radius: var(--radius-md); border: 1px solid var(--color-border); background: #fff; color: var(--color-text-sub); cursor: pointer; transition: all .15s; font-weight: 500; }
+    .toggle-btn.on-culture { background: var(--color-accent-cult); color: #fff; border-color: #6D28D9; font-weight: 600; }
+    .toggle-btn.on-ani { background: var(--color-accent-ani); color: #fff; border-color: #1a6b47; font-weight: 600; }
+
+    /* 예측 시작 대형 실행 버튼 */
+    .btn-submit { width: 100%; padding: 14px; font-size: 15px; font-weight: 600; background: #0f172a; color: white; border: none; border-radius: var(--radius-md); cursor: pointer; transition: background 0.2s; margin-top: 10px; }
+    .btn-submit:hover { background: #1e293b; }
+
+    /* Kalman Filter 동작 알림 영역 */
+    .anote { font-size: 12px; color: #1e3a8a; padding: 12px 14px; background: rgba(55, 138, 221, 0.06); border-radius: var(--radius-md); border: 1px dashed rgba(55, 138, 221, 0.3); margin-bottom: 18px; line-height: 1.5; font-weight: 500; }
+
+    /* 대시보드 지표 카드 배치 */
+    .metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+    .metric { background: var(--color-bg-main); border-radius: var(--radius-md); padding: 14px; border: 1px solid var(--color-border); text-align: center; }
+    .metric .lbl { font-size: 11px; font-weight: 500; color: var(--color-text-sub); margin-bottom: 4px; }
+    .metric .val { font-size: 15px; font-weight: 700; color: var(--color-text-main); word-break: keep-all; }
+    .metric .sub { font-size: 10px; color: var(--color-text-sub); margin-top: 2px; }
+
+    /* 최종 스코어 예측 메인 전용 강조 카드 */
+    .final-card { background: var(--color-bg-main); border: 1px solid var(--color-border); border-left: 4px solid var(--color-primary); border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px; }
+    .final-card .lbl { font-size: 12px; font-weight: 600; color: var(--color-text-sub); margin-bottom: 4px; }
+    .final-card .val { font-size: 24px; font-weight: 800; color: var(--color-primary); }
+    .final-card .range { font-size: 11px; color: var(--color-text-sub); margin-top: 4px; }
+    
+    /* 지정 고정 문구 전용 배지 스타일 */
+    .final-card .sig { font-size: 11px; margin-top: 8px; padding: 4px 10px; border-radius: 6px; display: inline-block; font-weight: 600; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+
+    /* 실시간 차트 영역 기하구조 범례 지지 */
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 11px; color: var(--color-text-sub); margin-bottom: 12px; padding-left: 4px; }
+    .legend span { display: flex; align-items: center; gap: 4px; }
+    .ldot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+    .chart-container { position: relative; width: 100%; height: 230px; margin-bottom: 24px; padding: 10px; background: #fff; border-radius: var(--radius-md); }
+    
+    /* 테이블 서식 구조화 */
+    .table-responsive { width: 100%; overflow-x: auto; border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; min-width: 670px; }
+    th { font-size: 12px; color: var(--color-text-sub); font-weight: 500; padding: 10px 12px; border-bottom: 1px solid var(--color-border); background: #f1f5f9; text-align: right; }
+    th:first-child { text-align: left; }
+    td { padding: 8px 12px; border-bottom: 1px solid var(--color-border); color: var(--color-text-main); text-align: right; vertical-align: middle; }
+    td:first-child { text-align: left; font-weight: 500; }
+    tr:hover td { background-color: #f8fafc; }
+    
+    /* 테이블 행 제어 상태 지시 스타일 */
+    tr.w2 td { border-top: 2px solid #94a3b8; }
+    tr.hrow td { background: rgba(239, 159, 39, 0.05); }
+    tr.crow td { background: rgba(124, 58, 237, 0.04); }
+    tr.arow td { color: var(--color-text-main); }
+    tr.prow td { color: #94a3b8; }
+    
+    /* 인라인 테이블 에디팅 인풋 세트 */
+    .ai { width: 100%; max-width: 95px; font-size: 12px; padding: 5px 8px; border: 1px solid var(--color-border); border-radius: 6px; background: #fff; color: var(--color-text-main); text-align: right; font-weight: 500; outline: none; transition: all 0.2s; }
+    .ai:focus { border-color: var(--color-primary); box-shadow: 0 0 0 2px rgba(55, 138, 221, 0.1); }
+    .ai.filled { border-color: #10b981; background: rgba(16, 185, 129, 0.04); color: #065f46; font-weight: bold; }
+
+    /* 테이블 내부 특수일 환경 셀 가로줄바꿈 영구방지 처리 */
+    .hcell { color: #854F0B; font-weight: 600; font-size: 11px; white-space: nowrap; }
+    .ccell { color: #6D28D9; font-weight: 600; font-size: 11px; white-space: nowrap; }
+    .pos { color: #10b981; font-weight: 600; } 
+    .neg { color: #94a3b8; }
+    .coef-note { font-size: 11px; color: var(--color-text-sub); margin-top: 14px; text-align: left; line-height: 1.6; }
+
+    /* 대화형 분기형 반응 가로 레이아웃 미디어 쿼리 */
+    @media (min-width: 768px) {
+      body { padding: 40px; }
+      .app-container.has-result { 
+        max-width: 1160px;
+        flex-direction: row;
+        align-items: start; 
+        gap: 24px; 
+      }
+      .form-side { flex-shrink: 0; }
+      #result-area { flex-grow: 1; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="main-container" class="app-container">
+  
+  <div class="form-side">
+    <div class="section-card">
+      <div class="section-title">기본 정보</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom: 18px;">
+        <div>
+          <label for="base-aud">개봉일 관객수</label>
+          <input type="number" id="base-aud" placeholder="예: 218266" min="1">
+        </div>
+        <div>
+          <label for="open-day">개봉 요일</label>
+          <select id="open-day">
+            <option value="0">월요일</option>
+            <option value="1">화요일</option>
+            <option value="2" selected>수요일</option>
+            <option value="3">목요일</option>
+            <option value="4">금요일</option>
+            <option value="5">토요일</option>
+            <option value="6">일요일</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 18px; display: grid; grid-template-columns: 1fr; gap: 8px;">
+        <div class="card-row" style="margin-bottom:0;">
+          <span class="row-label">🟢 장르 구분</span>
+          <button class="toggle-btn" id="ani-btn" onclick="toggleAni(this)" style="flex:1; text-align:center;">일반 영화 (기본값)</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 18px;">
+        <div class="section-title" style="margin-bottom:8px;">1주차 특수일 <span>공휴일 요일 및 문화의날 여부</span></div>
+        <div class="card-row">
+          <span class="row-label">🟠 공휴일</span>
+          <div style="display:flex; gap:5px; flex:1;" id="hd1">
+            <button class="day-btn" data-week="1" data-di="0">월</button>
+            <button class="day-btn" data-week="1" data-di="1">화</button>
+            <button class="day-btn" data-week="1" data-di="2">수</button>
+            <button class="day-btn" data-week="1" data-di="3">목</button>
+            <button class="day-btn" data-week="1" data-di="4">금</button>
+            <button class="day-btn" data-week="1" data-di="5">토</button>
+            <button class="day-btn" data-week="1" data-di="6">일</button>
+          </div>
+        </div>
+        <div class="card-row">
+          <span class="row-label">🟣 문화의날</span>
+          <button class="toggle-btn" id="cult-1" onclick="toggleCulture(this)">없음</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 10px;">
+        <div class="section-title" style="margin-bottom:8px;">2주차 특수일 <span>공휴일 요일 및 문화의날 여부</span></div>
+        <div class="card-row">
+          <span class="row-label">🟠 공휴일</span>
+          <div style="display:flex; gap:5px; flex:1;" id="hd2">
+            <button class="day-btn" data-week="2" data-di="0">월</button>
+            <button class="day-btn" data-week="2" data-di="1">화</button>
+            <button class="day-btn" data-week="2" data-di="2">수</button>
+            <button class="day-btn" data-week="2" data-di="3">목</button>
+            <button class="day-btn" data-week="2" data-di="4">금</button>
+            <button class="day-btn" data-week="2" data-di="5">토</button>
+            <button class="day-btn" data-week="2" data-di="6">일</button>
+          </div>
+        </div>
+        <div class="card-row">
+          <span class="row-label">🟣 문화의날</span>
+          <button class="toggle-btn" id="cult-2" onclick="toggleCulture(this)">없음</button>
+        </div>
+      </div>
+
+      <button onclick="initCalc()" class="btn-submit">예측 시작</button>
+    </div>
+  </div>
+
+  <div id="result-area" class="section-card" style="display:none;">
+    <div class="section-title" style="font-size: 15px; margin-bottom: 16px; border-bottom: 1px solid var(--color-border); padding-bottom: 10px;">📊 실시간 예측분석 대시보드</div>
+    
+    <div id="anote" class="anote"></div>
+    
+    <div class="metric-grid">
+      <div class="metric"><div class="lbl">1주차 합계</div><div class="val" id="sum1">—</div></div>
+      <div class="metric"><div class="lbl">2주차 합계</div><div class="val" id="sum2">—</div><div class="sub" id="sum2r">—</div></div>
+      <div class="metric"><div class="lbl">2주 누적치</div><div class="val" id="sumT" style="color:var(--color-text-main)">—</div></div>
+    </div>
+    
+    <div class="final-card">
+      <div class="lbl">🍿 최종 관객수 예측 결과</div>
+      <div class="val" id="final-pred">—</div>
+      <div class="range" id="final-range"></div>
+      <div id="final-sig"></div>
+    </div>
+
+    <div class="legend">
+      <span><span class="ldot" style="background:#4f8ef7"></span>1주차 예측</span>
+      <span><span class="ldot" style="background:#888"></span>2주차 예측</span>
+      <span><span class="ldot" style="background:#3ab87a"></span>실제 입력값</span>
+      <span><span class="ldot" style="background:#EF9F27"></span>공휴일 실제치</span>
+      <span><span class="ldot" style="background:#7C3AED"></span>문화의날 실제치</span>
+    </div>
+    <div class="chart-container">
+      <canvas id="chart"></canvas>
+    </div>
+    
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>일차</th><th>요일</th><th>주차</th><th>특수일 환경</th>
+            <th style="text-align: center; width: 120px;">실제 실적수</th><th>예측 관객수</th><th>전일 대비</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    
+    <div class="coef-note">
+      ※ Mc 모델 (주차+요일+공휴일+문화의날) + Kalman Filter (Q=0.1643, R=0.1804)<br>
+      ※ 최종 예측 수식: exp(−0.445 + 1.226·log(2주누적) − 0.204·log(개봉일관객수)) · R²=0.959, MAPE=16.3%<br>
+      ※ 2022~2026년 국내 개봉작 349편 통계 기반 고도화 추정 적용
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+/* 고정 가중치 파라미터 매트릭스 계수 */
+const C2 = -0.763, CD = [0, -0.028, 0.468, 0.279, 0.503, 1.187, 1.085], CH = 0.990, CC = 0.176;
+const C_ANI_2W = 0.185, C_ANI_WD = [0, 0.05, -0.15, -0.12, -0.10, -0.22, -0.20]; // v11 전용 애니 가중치 벡터
+const Q_KF = 0.1643, R_KF = 0.1804;
+const DN = ['월', '화', '수', '목', '금', '토', '일'];
+const F_INT = -0.445, F_2W = 1.226, F_OPEN = -0.204;
+const MAPE = 0.163;
+let CI = null, ST = {};
+
+document.querySelectorAll('.day-btn').forEach(b => b.addEventListener('click', () => b.classList.toggle('on-hol')));
+
+function toggleCulture(btn) {
+  btn.classList.toggle('on-culture');
+  btn.textContent = btn.classList.contains('on-culture') ? '있음 (수요일)' : '없음';
+}
+
+function toggleAni(btn) {
+  btn.classList.toggle('on-ani');
+  if (btn.classList.contains('on-ani')) {
+    btn.textContent = '애니메이션 장르 특화 가중치 적용됨';
+  } else {
+    btn.textContent = '일반 영화 (기본값)';
+  }
+}
+
+function getHolSet(week) {
+  const s = new Set();
+  document.querySelectorAll(`.day-btn[data-week="${week}"].on-hol`).forEach(b => s.add(parseInt(b.dataset.di)));
+  return s;
+}
+
+function coef(di, idx, isHol, isCulture, isAni) {
+  let v = (idx >= 7 ? C2 : 0) + CD[di] + (isHol ? CH : 0) + (isCulture ? CC : 0);
+  if (isAni) {
+    v += (idx >= 7 ? C_ANI_2W : 0) + C_ANI_WD[di];
+  }
+  return v;
+}
+
+function kalman(days, hols, cultures, actuals, alpha0, isAni) {
+  let a = alpha0, P = Q_KF;
+  return days.map((di, i) => {
+    P += Q_KF;
+    if (actuals[i] !== null && actuals[i] > 0) {
+      const obs = Math.log1p(actuals[i]) - coef(di, i, hols[i], cultures[i], isAni);
+      const K = P / (P + R_KF);
+      a += K * (obs - a); 
+      P = (1 - K) * P;
+    }
+    return { alpha: a, K: P / (P + R_KF) };
+  });
+}
+
+function predictFinal(tw, op) {
+  return Math.exp(F_INT + F_2W * Math.log(tw) + F_OPEN * Math.log(op));
+}
+
+function fmtMan(n) {
+  if (n >= 10000000) return (n / 10000000).toFixed(1) + '천만';
+  if (n >= 1000000)  return (n / 10000).toFixed(0) + '만';
+  if (n >= 10000)    return (n / 10000).toFixed(1) + '만';
+  return Math.round(n).toLocaleString();
+}
+
+function render() {
+  const {days, hols, cultures, actuals, alpha0, baseAud, isAni} = ST;
+  const kf = kalman(days, hols, cultures, actuals, alpha0, isAni);
+  const nA = actuals.filter(v => v !== null).length;
+
+  document.getElementById('anote').innerHTML = nA <= 1
+    ? `📈 <b>α 초기 추정 완료</b>: 개봉일 관객수 기준 (테이블 내 실제 실적값을 채우면 자동 갱신됩니다)`
+    : `🔄 <b>Kalman Filter 작동 중</b> — 실제 입력값 <b>${nA}개</b> 반영 완료 · 현재 추적 제어 계수(KG): ${kf[Math.max(0, nA - 1)].K.toFixed(3)}`;
+
+  const preds = days.map((di, i) => ({
+    di, name: DN[di], week: i < 7 ? 1 : 2,
+    isHol: hols[i], isCulture: cultures[i],
+    actual: actuals[i],
+    pred: Math.round(Math.expm1(kf[i].alpha + coef(di, i, hols[i], cultures[i], isAni)))
+  }));
+
+  const vals = preds.map(p => p.actual !== null ? p.actual : p.pred);
+  const s1 = vals.slice(0, 7).reduce((a, b) => a + b, 0);
+  const s2 = vals.slice(7).reduce((a, b) => a + b, 0);
+  const sT = s1 + s2;
+  
+  document.getElementById('sum1').textContent = s1.toLocaleString() + '명';
+  document.getElementById('sum2').textContent = s2.toLocaleString() + '명';
+  document.getElementById('sum2r').textContent = '1주차 대비 ' + (s2 / s1 * 100).toFixed(1) + '%';
+  document.getElementById('sumT').textContent = sT.toLocaleString() + '명';
+
+  const fp = predictFinal(sT, baseAud);
+  const flo = fp * (1 - MAPE), fhi = fp * (1 + MAPE);
+  document.getElementById('final-pred').textContent = fmtMan(Math.round(fp)) + '명 예측';
+  document.getElementById('final-range').textContent =
+    `예측 오차 범위 (±16.3%): ${fmtMan(Math.round(flo))} ~ ${fmtMan(Math.round(fhi))}명`;
+  
+  // 요청하신 정량 스펙 배지 구조 상시 고정 렌더링
+  document.getElementById('final-sig').innerHTML = `<span class="sig">OLS 로그-로그 회귀 · R²=0.959 · MAPE=16.3% (실제 단위 오차)</span>`;
+
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+  
+  preds.forEach((p, i) => {
+    const dv = p.actual !== null ? p.actual : p.pred;
+    const pv = i > 0 ? (preds[i - 1].actual !== null ? preds[i - 1].actual : preds[i - 1].pred) : null;
+    const chg = pv !== null ? (dv - pv) / pv * 100 : null;
+    const isA = p.actual !== null;
+    
+    const tr = document.createElement('tr');
+    if (i === 7) tr.classList.add('w2');
+    if (p.isHol) tr.classList.add('hrow');
+    else if (p.isCulture) tr.classList.add('crow');
+    tr.classList.add(isA ? 'arow' : 'prow');
+    
+    let sp = '';
+    if (p.isHol && p.isCulture) sp = '<span class="hcell">★공휴일</span> <span class="ccell">🎭문화</span>';
+    else if (p.isHol) sp = '<span class="hcell">★ 공휴일</span>';
+    else if (p.isCulture) sp = '<span class="ccell">🎭 문화의날</span>';
+    
+    tr.innerHTML = `
+      <td>${i + 1}일차</td>
+      <td>${p.name}요일</td>
+      <td style="color:#aaa">${p.week}주차</td>
+      <td>${sp}</td>
+      <td style="text-align: center;"><input class="ai${isA ? ' filled' : ''}" type="number" min="0" placeholder="입력" value="${isA ? p.actual : ''}" data-idx="${i}" onchange="onInput(this)"></td>
+      <td style="font-weight:600; opacity:${isA ? '0.35' : '1'}">${p.pred.toLocaleString()}명</td>
+      <td class="${chg === null ? '' : chg >= 0 ? 'pos' : 'neg'}">${chg === null ? '—' : (chg >= 0 ? '+' : '') + chg.toFixed(1) + '%'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  const fontFamily = getComputedStyle(document.body).fontFamily || 'sans-serif';
+  Chart.defaults.font.family = fontFamily;
+
+  /* 실제 실적이 입력되어도 투명화하지 않고 모델 예측 바 칼라를 고정적으로 상시 노출 */
+  const bgP = preds.map((p, i) => {
+    if (p.isHol) return 'rgba(239,159,39,0.3)';
+    if (p.isCulture) return 'rgba(124,58,237,0.3)';
+    return i < 7 ? 'rgba(55, 138, 221, 0.55)' : 'rgba(148, 163, 184, 0.55)';
+  });
+
+  /* 실제 실적치 전용 컬러 매핑 매트릭스 */
+  const bgA = preds.map(p => {
+    if (p.actual === null) return 'transparent';
+    if (p.isHol) return '#EF9F27';
+    if (p.isCulture) return '#7C3AED';
+    return '#3ab87a';
+  });
+
+  if (CI) CI.destroy();
+  CI = new Chart(document.getElementById('chart'), {
+    type: 'bar',
+    data: {
+      labels: preds.map((p, i) => `${i + 1}(${p.name})`),
+      datasets: [
+        /* Side-by-Side 멀티 그리드 바 나란히 비교 설정 동기화 */
+        { label: '모델 예측치', data: preds.map(p => p.pred), backgroundColor: bgP, borderRadius: 3, borderWidth: 0, categoryPercentage: 0.8, barPercentage: 0.9 },
+        { label: '실제 실적치', data: preds.map(p => p.actual), backgroundColor: bgA, borderRadius: 3, borderWidth: 0, categoryPercentage: 0.8, barPercentage: 0.9 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(15, 23, 42, 0.9)', padding: 10,
+          callbacks: {
+            label: ctx => {
+              const p = preds[ctx.dataIndex];
+              if (ctx.datasetIndex === 0) return ` 보정 예측: ${p.pred.toLocaleString()}명`;
+              if (ctx.datasetIndex === 1 && p.actual !== null) return ` 실제 실적: ${p.actual.toLocaleString()}명`;
+              return null;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { font: { size: 10 }, color: '#888', maxRotation: 45 }, grid: { display: false }, border: { display: false } },
+        y: { ticks: { font: { size: 11 }, color: '#888', callback: v => v >= 10000 ? (v / 10000).toFixed(0) + '만' : v.toLocaleString() }, grid: { color: 'rgba(128,128,128,0.1)' }, border: { display: false } }
+      }
+    }
+  });
+}
+
+function onInput(el) {
+  const idx = parseInt(el.dataset.idx);
+  const val = el.value === '' ? null : Math.max(0, parseInt(el.value) || 0);
+  ST.actuals[idx] = val;
+  el.classList.toggle('filled', val !== null);
+  render();
+}
+
+function initCalc() {
+  const base = parseFloat(document.getElementById('base-aud').value);
+  const openDi = parseInt(document.getElementById('open-day').value);
+  if (!base || base <= 0) { alert('개봉일 관객수를 올바르게 입력해주세요.'); return; }
+
+  const isAni = document.getElementById('ani-btn').classList.contains('on-ani');
+  const h1 = getHolSet('1'), h2 = getHolSet('2');
+  const cult1 = document.getElementById('cult-1').classList.contains('on-culture');
+  const cult2 = document.getElementById('cult-2').classList.contains('on-culture');
+  
+  const days = Array.from({length: 14}, (_, i) => (openDi + i) % 7);
+  const hols = days.map((di, i) => i < 7 ? h1.has(di) : h2.has(di));
+  const cultures = days.map((di, i) => di === 2 && (i < 7 ? cult1 : cult2));
+  
+  const alpha0 = Math.log1p(base) - coef(openDi, 0, hols[0], cultures[0], isAni);
+  
+  ST = { days, hols, cultures, actuals: Array(14).fill(null), alpha0, baseAud: base, isAni };
+  ST.actuals[0] = base;
+
+  document.getElementById('main-container').classList.add('has-result');
+  document.getElementById('result-area').style.display = 'block';
+  render();
+}
+</script>
+</body>
+</html>
